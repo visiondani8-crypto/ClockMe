@@ -1,0 +1,8 @@
+{
+  "name": "clockme",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ClockMe: shift and pay tracker with Polo the mascot",
+  "engines": { "node": ">=20" }
+}
