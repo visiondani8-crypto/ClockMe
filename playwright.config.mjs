@@ -11,7 +11,9 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 3,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["list"], ["html", { open: "never", outputFolder: "playwright-report" }], ["json", { outputFile: "test-results/results.json" }]] : [["list"], ["json", { outputFile: "test-results/results.json" }]],
-  use: { baseURL: "http://localhost:8787", trace: "retain-on-failure", ...local },
+  // The offline helper (sw.js) is blocked by default so the fake services in the tests always see requests;
+  // tests/e2e/offline.spec.mjs turns it back on.
+  use: { baseURL: "http://localhost:8787", trace: "retain-on-failure", serviceWorkers: "block", ...local },
   webServer: { command: "node scripts/serve.mjs", url: "http://localhost:8787/", reuseExistingServer: !process.env.CI, env: { PORT: "8787" } },
   projects: [
     { name: "mobile", use: { ...devices["Pixel 7"], ...local } },

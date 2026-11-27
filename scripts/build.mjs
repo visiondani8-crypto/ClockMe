@@ -31,7 +31,7 @@ let html = template.replace("/*__STYLES__*/\n", () => styles).replace("/*__APP__
 if (html.includes("/*__STYLES__*/") || html.includes("/*__APP__*/")) throw new Error("template placeholders not replaced");
 
 const cfgScript = `<script>window.CLOCKME_CFG=${JSON.stringify(publicCfg)};</script>`;
-const swScript = `<script>if("serviceWorker" in navigator && location.protocol === "https:") addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>`;
+const swScript = `<script>if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>`;
 
 // Content-Security-Policy: inline scripts are allowed only by their exact hash.
 const inline = [];

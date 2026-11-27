@@ -1679,6 +1679,7 @@ function importSheet(){
       <div class="f"><input class="full" id="imp-name" data-bind="name" placeholder="Your name as it appears on the rota" value="${esc(d.name)}"></div>
       ${jobs.length>1?fRow("Job",sel("imp-job",'data-bind="jobId"',jobs.map(j=>[j.id,j.name]),d.jobId)):""}
     </div><div class="foot">If the rota lists the whole team, ClockMe only picks the rows with your name.</div></div>
+    ${!UI.online && HOSTED && d.status!=="error"?`<div class="warn" id="imp-offline">${ico("cloud-off","ico-sm")}<span>You're offline. Reading a rota needs a connection. You can still add shifts by hand.</span></div>`:""}
     ${d.status==="error"?`<div class="warn">${ico("triangle-alert","ico-sm")}<span>${esc(d.msg)}${d.code?` <span class="xs" style="opacity:.6">(${esc(d.code)})</span>`:""}</span></div>`:""}
     ${d.status==="working"?`<div class="row" style="justify-content:center;gap:10px;padding:8px"><span class="spinner"></span><span class="small">Reading your rota… this can take up to a minute</span></div><button class="btn ghost" data-act="importStop" style="width:100%">Stop</button>`
       :`<button class="btn big" data-act="importRead" ${(UI.importFile||d.text.trim())&&jobs.length?"":"disabled"}>${ico("sparkles")} Find my shifts</button>`}
@@ -2316,6 +2317,7 @@ function statsCardHTML(){
    kept in S.settings.pro so it also travels in backups. Until Stripe is set up (/api/billing says not ready),
    everything stays unlocked. In the Claude preview there's no billing at all. */
 const BILL_KEY = "clockme-billing", DEV_KEY = "clockme-device", PENDING_KEY = "clockme-checkout";
+UI.online = navigator.onLine !== false;
 UI.billing = (() => { try{ return JSON.parse(localStorage.getItem(BILL_KEY) || "null"); }catch(e){ return null; } })();
 UI.proPlan = "yearly";
 const billingOn = () => HOSTED && !!(UI.billing && UI.billing.ready && (UI.billing.plans || []).length);
@@ -2484,10 +2486,11 @@ function hostedReader(){
       const img = opts.images && opts.images[0];
       if(img){ body.image = await blobToB64(img); body.mediaType = img.type || "image/jpeg"; }
       let r;
+      if(navigator.onLine === false) throw {code:"offline"};
       const pass = (S.settings.pro && S.settings.pro.pass) || "";
       const check = await humanCheck("read_rota");
       try{ r = await fetch("/api/read-rota", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, pass ? {"X-ClockMe-Pass":pass} : {}, check ? {"X-ClockMe-Check":check} : {}), body:JSON.stringify(body), signal:opts.signal}); }
-      catch(e){ throw {code: e && e.name === "AbortError" ? "cancelled" : "upstream_error"}; }
+      catch(e){ throw {code: e && e.name === "AbortError" ? "cancelled" : navigator.onLine === false ? "offline" : "upstream_error"}; }
       if(!r.ok){ const err = await r.json().catch(() => ({})); throw {code: err.code || (r.status === 429 ? "rate_limited" : "upstream_error")}; }
       return r.json();
     }
@@ -2523,7 +2526,7 @@ async function readRoster(){
     const c = e && e.code;
     if(c === "cancelled"){ d.status = "idle"; }
     else if(c === "pro_required"){ d.status = "idle"; if(S.settings.pro) S.settings.pro.checkedAt = 0; refreshBilling(true); openPro("rota"); return; }
-    else { d.status = "error"; d.code = c || "unknown"; d.msg = c === "not_setup" ? "Rota reading isn't switched on yet. Paste the rota as text, or add your shifts by hand." : c === "image_too_large" ? "That photo is too big. Try a screenshot instead." : c === "images_unavailable" ? "Photos can't be read right now. Paste the rota as text instead." : c === "sampling_disabled" ? "Rota reading isn't available on your account right now." : c === "session_expired" ? "Your sign-in expired. Close and reopen ClockMe." : c === "refused" ? "That image couldn't be read. Try a screenshot of just your shifts." : c === "not_granted" ? "ClockMe wasn't allowed to read the rota. Allow it when asked, or add shifts by hand." : c === "rate_limited" ? "Too many requests right now. Try again in a minute." : c === "too_many" ? "You've read a lot of rotas in a short time. Try again in a bit, or paste it as text." : c === "check_failed" ? "ClockMe couldn't confirm the request came from you. Reload the page and try again." : c === "busy_today" ? "Rota reading is busy today. Paste the rota as text, or try again tomorrow." : c === "image_rejected" ? "That image couldn't be read. Try a JPG or PNG screenshot." : c === "invalid_json" ? "The rota couldn't be read clearly. Try again or paste it as text." : "Something went wrong reading the rota. Try again."; }
+    else { d.status = "error"; d.code = c || "unknown"; d.msg = c === "offline" ? "You're offline. Reading a rota needs a connection. You can still add shifts by hand." : c === "not_setup" ? "Rota reading isn't switched on yet. Paste the rota as text, or add your shifts by hand." : c === "image_too_large" ? "That photo is too big. Try a screenshot instead." : c === "images_unavailable" ? "Photos can't be read right now. Paste the rota as text instead." : c === "sampling_disabled" ? "Rota reading isn't available on your account right now." : c === "session_expired" ? "Your sign-in expired. Close and reopen ClockMe." : c === "refused" ? "That image couldn't be read. Try a screenshot of just your shifts." : c === "not_granted" ? "ClockMe wasn't allowed to read the rota. Allow it when asked, or add shifts by hand." : c === "rate_limited" ? "Too many requests right now. Try again in a minute." : c === "too_many" ? "You've read a lot of rotas in a short time. Try again in a bit, or paste it as text." : c === "check_failed" ? "ClockMe couldn't confirm the request came from you. Reload the page and try again." : c === "busy_today" ? "Rota reading is busy today. Paste the rota as text, or try again tomorrow." : c === "image_rejected" ? "That image couldn't be read. Try a JPG or PNG screenshot." : c === "invalid_json" ? "The rota couldn't be read clearly. Try again or paste it as text." : "Something went wrong reading the rota. Try again."; }
   }
   track("rota_read", {from: UI.importFile ? "photo" : "text", result: d.status, error: d.code || null, shifts: (d.results || []).length});
   if(UI.sheet && UI.sheet.kind === "import") render();
@@ -3159,3 +3162,21 @@ render();
 setTimeout(connect, 0);
 startStats();
 (() => { const back = handleBillingReturn(); refreshBilling(back === "portal", back === true); })();
+/* Offline: clocking, shifts, pay, insights, invoices and backups all work without a connection, because the data
+   lives on this phone. A small banner says so; things that need the internet say so up front; when the connection
+   comes back, billing is re-checked (and an unfinished checkout claimed). */
+function netBanner(){
+  let b = document.getElementById("net-banner");
+  if(UI.online){ if(b) b.remove(); return; }
+  if(!b){ b = document.createElement("div"); b.id = "net-banner"; b.className = "net-banner"; b.setAttribute("role", "status"); document.body.appendChild(b); }
+  b.textContent = "Offline · your shifts still save on this phone";
+}
+function setOnline(on){
+  if(UI.online === on) return;
+  UI.online = on; netBanner();
+  if(UI.sheet && UI.sheet.kind === "import") render();
+  if(on){ toast("Back online"); refreshBilling(); }
+}
+addEventListener("offline", () => setOnline(false));
+addEventListener("online", () => setOnline(true));
+netBanner();
