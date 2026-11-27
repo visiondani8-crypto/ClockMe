@@ -1,5 +1,7 @@
 # ClockMe
 
+Live: https://clockme-two.vercel.app
+
 Track your shifts and see exactly what you'll be paid, with Polo the mascot.
 
 - `index.html`: the whole app (one file: layout, styles and code)
