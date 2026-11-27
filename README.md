@@ -32,3 +32,14 @@ Autocapture, heatmaps and session replay are off. The project token is public by
 Connect Upstash for Redis from the Vercel Marketplace (it adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`),
 or set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` yourself. Change the caps with
 `ROTA_PER_HOUR`, `ROTA_PER_DAY` and `ROTA_DAILY_CAP`. Without Upstash the limits are simply off.
+
+## ClockMe Pro (Stripe)
+
+Pro (£2.99 a month or £19.99 a year, 7-day free trial) unlocks rota reading, invoices and payslip checks on the website.
+`api/billing.js` makes Stripe Checkout sessions, confirms finished ones, checks status and opens the customer portal.
+There are no accounts yet, so the device keeps a signed pass (customer + subscription IDs) that also travels in backups.
+Prices are found by lookup key (`clockme_pro_monthly`, `clockme_pro_yearly`), so test and live keys need no code change.
+
+Environment variables: `STRIPE_SECRET_KEY` (required), `CLOCKME_SIGNING_SECRET` (set), `STRIPE_PORTAL_CONFIGURATION`
+(optional), `PRO_TRIAL_DAYS` (default 7), `STRIPE_AUTOMATIC_TAX=on` once VAT registered.
+Until the key is set and the prices exist, nothing is locked.

@@ -1155,6 +1155,48 @@ h2{font-weight:700;letter-spacing:-.02em}
 .statsask .sa-a .btn{min-height:38px;padding:8px 16px;font-size:14px}
 @keyframes saIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.statsask{animation:none}}
+/* v19: ClockMe Pro paywall */
+.prosheet{display:flex;flex-direction:column;gap:14px;overflow-y:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+.pro-hero{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:18px 16px 16px;border-radius:26px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(90,190,255,.55),rgba(90,190,255,0) 70%),linear-gradient(160deg,var(--wash1),var(--wash2));border:1px solid var(--glass-line)}
+.pro-hero::after{content:"";position:absolute;inset:-40% -20% auto;height:120%;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.35) 50%,transparent 60%);transform:translateX(-60%);animation:proShine 3.6s ease-in-out 0.6s infinite;pointer-events:none}
+@keyframes proShine{0%{transform:translateX(-60%)}55%,100%{transform:translateX(60%)}}
+.pro-m{width:92px;height:92px;margin-bottom:2px;animation:mbob 3.2s ease-in-out infinite}
+.pro-m svg{width:100%;height:100%;overflow:visible}
+.pro-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:var(--btn);color:var(--btn-text);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pro-tag .ico{width:14px;height:14px}
+.pro-hero h2{margin:4px 0 0;font-family:var(--display,inherit);font-size:26px;line-height:1.08;letter-spacing:-.025em;color:var(--text)}
+.pro-hero p{margin:0;max-width:30ch;font-size:14.5px;line-height:1.4;color:var(--muted)}
+.pro-perks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pro-perks .pk{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:18px;background:var(--glass-bg);border:1px solid var(--glass-line)}
+.pro-perks .sq{flex:0 0 34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.pro-perks .sq .ico{width:18px;height:18px}
+.pro-perks b{display:block;font-size:14px;color:var(--text);letter-spacing:-.01em}
+.pro-perks small{display:block;margin-top:2px;font-size:12px;line-height:1.3;color:var(--muted)}
+.plans{display:flex;flex-direction:column;gap:10px}
+.plan{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-radius:20px;text-align:left;color:var(--text);
+  background:var(--glass-bg);border:2px solid var(--glass-line);transition:border-color .2s,transform .2s cubic-bezier(.2,.9,.3,1.3),box-shadow .2s}
+.plan:active{transform:scale(.98)}
+.plan.on{border-color:var(--accent);box-shadow:0 8px 24px -10px var(--accent)}
+.pl-radio{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;transition:border-color .2s}
+.plan.on .pl-radio{border-color:var(--accent)}
+.plan.on .pl-radio::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--accent);animation:plDot .25s cubic-bezier(.2,.9,.3,1.5)}
+@keyframes plDot{from{transform:scale(0)}to{transform:scale(1)}}
+.pl-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.pl-t b{font-size:16px}
+.pl-t small,.pl-p small{font-size:12.5px;color:var(--muted)}
+.pl-p{text-align:right;white-space:nowrap}
+.pl-p b{font-size:18px;letter-spacing:-.02em}
+.pl-badge{position:absolute;top:-10px;right:14px;padding:3px 9px;border-radius:999px;background:linear-gradient(135deg,#FF8DBA,#F0619A);color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.02em;box-shadow:0 6px 14px -6px #F0619A}
+#probuy{display:flex;align-items:center;justify-content:center;gap:10px}
+.pro-fine{margin:0 6px;text-align:center;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.prosheet .btn.ghost{align-self:center}
+.spin{width:18px;height:18px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pro-row .d{color:var(--accent);font-weight:600}
+@media (max-width:360px){.pro-perks{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.pro-hero::after,.pro-m{animation:none}}
+.prosheet>*{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -2467,6 +2509,8 @@ function profileView(C){
       ${item("calendar-days","Weekly roster",S.roster.on?`${S.roster.entries.length} shift${S.roster.entries.length===1?"":"s"} a week`:"Off","openRoster")}
       ${item("scan-line","Scan or paste a rota","","openImport")}
       ${item("flag","Goals",S.goals.length,"push",'data-page="goals"')}</div></div>
+    ${billingOn()?`<div><div class="glabel">ClockMe Pro</div><div class="group">
+      <button class="item pro-row" data-act="openProSheet"><span class="sq">${ico("sparkles")}</span><span class="t">${isPro()&&proSub()?"ClockMe Pro":"Try ClockMe Pro"}</span><span class="d">${esc(proStatusText())}</span>${ico("chevron-right","ico-sm")}</button></div></div>`:""}
     <div><div class="glabel">Account & privacy</div><div class="group">
       ${item("user-round","Your details",esc(st.email||"Add email"),"editName")}
       ${item("lock","Passcode lock",st.pinOn?"On":"Off","pinMenu")}
@@ -2921,11 +2965,11 @@ function helpSheet(){
 }
 function sheetHTML(isNew){
   const s = UI.sheet; if(!s) return "";
-  const titles = {shift: s.data.type==="holiday" ? (s.data.id?"Edit holiday":"Book holiday") : s.data.type==="sick" ? "Sick day" : s.data.id ? "Edit shift" : (s.data.fromClock ? "Clock out" : "New shift"), job: S.jobs.some(j => j.id === s.data.id) ? "Edit job" : "New job", goal: s.data.id ? "Edit goal" : "New goal", name:"Your details", roster:"Weekly roster", import:"Scan your rota", invoice: s.data.id ? "Edit invoice" : "New invoice", business:"Business & bank", pay:"Pay schedule", help:"How ClockMe works", pin:"Passcode lock", payslip:"Check a payslip", week:"Edit a week"};
-  const body = {shift:shiftSheet, job:jobSheet, goal:goalSheet, name:nameSheet, roster:rosterSheet, import:importSheet, invoice:invoiceSheet, business:businessSheet, pay:paySheet, help:helpSheet, pin:pinSheet, payslip:payslipSheet, week:weekSheet}[s.kind]();
-  const saveLabel = s.kind === "payslip" ? "Save" : s.kind === "invoice" ? (s.data.id ? "Save" : "Create") : (s.kind === "import" || s.kind === "help" || s.kind === "pin" || s.kind === "week") ? "" : "Save";
+  const titles = {shift: s.data.type==="holiday" ? (s.data.id?"Edit holiday":"Book holiday") : s.data.type==="sick" ? "Sick day" : s.data.id ? "Edit shift" : (s.data.fromClock ? "Clock out" : "New shift"), job: S.jobs.some(j => j.id === s.data.id) ? "Edit job" : "New job", goal: s.data.id ? "Edit goal" : "New goal", name:"Your details", roster:"Weekly roster", import:"Scan your rota", pro:"ClockMe Pro", invoice: s.data.id ? "Edit invoice" : "New invoice", business:"Business & bank", pay:"Pay schedule", help:"How ClockMe works", pin:"Passcode lock", payslip:"Check a payslip", week:"Edit a week"};
+  const body = {shift:shiftSheet, job:jobSheet, goal:goalSheet, name:nameSheet, roster:rosterSheet, import:importSheet, invoice:invoiceSheet, business:businessSheet, pay:paySheet, help:helpSheet, pin:pinSheet, payslip:payslipSheet, week:weekSheet, pro:proSheet}[s.kind]();
+  const saveLabel = s.kind === "payslip" ? "Save" : s.kind === "invoice" ? (s.data.id ? "Save" : "Create") : (s.kind === "import" || s.kind === "help" || s.kind === "pin" || s.kind === "week" || s.kind === "pro") ? "" : "Save";
   return `<div class="overlay ${isNew?"anim":""}" data-act="closeSheetBg"><div class="sheet" role="dialog" aria-label="${titles[s.kind]}">
-    <div class="sheet-h"><button data-act="closeSheet" style="justify-self:start">${s.kind==="import"||s.kind==="help"?"Close":"Cancel"}</button><b>${titles[s.kind]}</b>${saveLabel?`<button class="save" data-act="saveSheet" id="savebtn" ${canSave()?"":"disabled"}>${saveLabel}</button>`:"<span></span>"}</div>${body}</div></div>`;
+    <div class="sheet-h"><button data-act="closeSheet" style="justify-self:start">${s.kind==="import"||s.kind==="help"||s.kind==="pro"?"Close":"Cancel"}</button><b>${titles[s.kind]}</b>${saveLabel?`<button class="save" data-act="saveSheet" id="savebtn" ${canSave()?"":"disabled"}>${saveLabel}</button>`:"<span></span>"}</div>${body}</div></div>`;
 }
 function canSave(){
   const s = UI.sheet; if(!s) return false; const d = s.data;
@@ -3467,6 +3511,136 @@ function statsCardHTML(){
   </div>`;
 }
 
+/* ============ ClockMe Pro (Stripe, website only) ============
+   No accounts yet: after Stripe Checkout the server gives this device a signed pass (customer + subscription),
+   kept in S.settings.pro so it also travels in backups. Until Stripe is set up (/api/billing says not ready),
+   everything stays unlocked. In the Claude preview there's no billing at all. */
+const BILL_KEY = "clockme-billing", DEV_KEY = "clockme-device", PENDING_KEY = "clockme-checkout";
+UI.billing = (() => { try{ return JSON.parse(localStorage.getItem(BILL_KEY) || "null"); }catch(e){ return null; } })();
+UI.proPlan = "yearly";
+const billingOn = () => HOSTED && !!(UI.billing && UI.billing.ready && (UI.billing.plans || []).length);
+function deviceId(){
+  let d = ""; try{ d = localStorage.getItem(DEV_KEY) || ""; }catch(e){}
+  if(!/^[a-zA-Z0-9-]{8,64}$/.test(d)){ d = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (uid() + "-" + uid()); try{ localStorage.setItem(DEV_KEY, d); }catch(e){} }
+  return d;
+}
+const proSub = () => (S.settings.pro && S.settings.pro.sub) || null;
+function isPro(){
+  if(!billingOn()) return true;
+  const sub = proSub(); if(!sub || !sub.pro) return false;
+  const end = Math.max(sub.until || 0, sub.trialEnd || 0) * 1000;
+  return !end || end > Date.now() - 3*DAY; // a few days' grace offline
+}
+async function billApi(body){
+  let r; try{ r = await fetch("/api/billing", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)}); }
+  catch(e){ throw {code:"offline"}; }
+  const j = await r.json().catch(() => ({}));
+  if(!r.ok) throw {code: j.code || "error", status: r.status};
+  return j;
+}
+function setPro(j){ S.settings.pro = {pass:j.pass, sub:j.sub, checkedAt:Date.now()}; save(); }
+async function claimCheckout(session, quiet){
+  try{
+    const j = await billApi({action:"claim", session, device:deviceId()});
+    setPro(j); try{ localStorage.removeItem(PENDING_KEY); }catch(e){}
+    track("pro_started", {plan: j.sub && j.sub.plan, status: j.sub && j.sub.status});
+    if(!quiet){ UI.sheet = null; render(); confetti(); mascotHappy && mascotHappy(1400);
+      toast(j.sub && j.sub.status === "trialing" ? `Welcome to Pro! Your free trial ends ${dm(j.sub.trialEnd*1000)}` : "Welcome to ClockMe Pro!"); }
+    return true;
+  }catch(e){
+    if(["not_yours","not_found","bad_request"].includes(e.code)) try{ localStorage.removeItem(PENDING_KEY); }catch(x){}
+    if(!quiet) toast(e.code === "not_finished" ? "Your payment is still finishing. Open ClockMe again in a minute." : "Couldn't confirm Pro yet. Open ClockMe again in a minute.");
+    return false;
+  }
+}
+async function refreshBilling(force){
+  if(!HOSTED) return;
+  try{ const r = await fetch("/api/billing"); if(r.ok){ UI.billing = await r.json(); try{ localStorage.setItem(BILL_KEY, JSON.stringify(UI.billing)); }catch(e){} } }catch(e){}
+  if(!billingOn()){ render(); return; }
+  let pend = null; try{ pend = localStorage.getItem(PENDING_KEY); }catch(e){}
+  const pr = S.settings.pro;
+  if(pend && !(pr && pr.pass)) await claimCheckout(pend, true);
+  else if(pr && pr.pass && (force || Date.now() - (pr.checkedAt || 0) > 6*3600e3)){
+    try{ setPro(await billApi({action:"status", pass:pr.pass})); }
+    catch(e){ if(e.code === "bad_pass"){ delete S.settings.pro; save(); } }
+  }
+  render();
+}
+function handleBillingReturn(){
+  if(!HOSTED) return;
+  const q = new URLSearchParams(location.search), c = q.get("checkout"), sid = q.get("session_id"), portal = q.get("portal");
+  if(!c && !portal) return;
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+  if(c === "done" && sid){ setTimeout(() => claimCheckout(sid, false), 400); return true; }
+  if(c === "cancelled"){ try{ localStorage.removeItem(PENDING_KEY); }catch(e){} setTimeout(() => toast("No problem. You haven't been charged"), 400); }
+  if(portal) return "portal";
+}
+function openPro(reason){
+  if(!billingOn()) return;
+  UI.sheet = {kind:"pro", data:{reason: reason || "profile"}}; render();
+  track("paywall_viewed", {reason: reason || "profile"});
+}
+// Gate for Pro-only actions. Returns true when the action may go ahead.
+function proOK(reason){ if(isPro()) return true; openPro(reason); return false; }
+const planMoney = (p, amount) => { try{ return new Intl.NumberFormat(undefined, {style:"currency", currency:(p.currency||"gbp").toUpperCase()}).format((amount ?? p.amount)/100); }catch(e){ return ((amount ?? p.amount)/100).toFixed(2); } };
+async function startCheckout(){
+  const plan = UI.proPlan || "yearly", b = document.getElementById("probuy");
+  if(b){ b.disabled = true; b.innerHTML = `<span class="spin"></span> Opening secure checkout…`; }
+  try{
+    const j = await billApi({action:"checkout", plan, device:deviceId(), email:S.settings.email || ""});
+    try{ localStorage.setItem(PENDING_KEY, j.id); }catch(e){}
+    track("checkout_started", {plan});
+    location.href = j.url;
+  }catch(e){
+    toast(e.code === "not_setup" ? "ClockMe Pro isn't available yet" : e.code === "offline" ? "You're offline. Connect and try again." : "Couldn't open checkout. Try again in a moment.");
+    render();
+  }
+}
+async function openPortal(){
+  const pr = S.settings.pro; if(!pr || !pr.pass) return openPro("profile");
+  toast("Opening your subscription…");
+  try{ const j = await billApi({action:"portal", pass:pr.pass}); location.href = j.url; }
+  catch(e){ toast(e.code === "offline" ? "You're offline. Connect and try again." : "Couldn't open your subscription. Try again in a moment."); }
+}
+function proStatusText(){
+  const sub = proSub();
+  if(!isPro() || !sub) return "Free";
+  const d = t => dm(t*1000);
+  if(sub.status === "trialing") return sub.cancelling ? `Trial · ends ${d(sub.trialEnd)}` : `Free trial · until ${d(sub.trialEnd)}`;
+  if(sub.status === "past_due") return "Payment problem";
+  if(sub.cancelling) return `Ends ${d(sub.cancelAt || sub.until)}`;
+  return sub.until ? `Renews ${d(sub.until)}` : "Active";
+}
+function proSheet(){
+  const B = UI.billing || {plans:[]}, plans = B.plans || [], n = B.trialDays || 0;
+  const m = plans.find(p => p.id === "monthly"), y = plans.find(p => p.id === "yearly");
+  if(!plans.some(p => p.id === UI.proPlan)) UI.proPlan = (y || plans[0] || {}).id;
+  const save = m && y && m.interval === "month" && y.interval === "year" ? Math.round((1 - y.amount / (m.amount * 12)) * 100) : 0;
+  const head = {rota:["Read your rota from a photo","Snap your rota and Polo adds every shift for you."], invoice:["Invoices with Pro","Turn your shifts into a ready-to-send invoice in seconds."], payslip:["Check every payslip","See straight away if you've been underpaid."]}[UI.sheet.data.reason] || ["Get more from ClockMe","Polo does the boring bits so you get paid right."];
+  const perks = [["scan-line","Read rota photos","Screenshots and photos turn into shifts"],["receipt","Invoices","For your self-employed work, as PDFs"],["file-check","Payslip checks","Compare each payslip with your shifts"],["heart","Support Polo","Help fund new features"]];
+  const card = p => {
+    if(!p) return "";
+    const on = UI.proPlan === p.id, per = p.interval === "year" ? "year" : "month";
+    const sub = p.interval === "year" ? `${planMoney(p, Math.round(p.amount/12))} a month` : "Billed monthly";
+    return `<button class="plan ${on?"on":""}" data-act="pickPlan" data-v="${p.id}" role="radio" aria-checked="${on}">
+      <span class="pl-radio" aria-hidden="true"></span>
+      <span class="pl-t"><b>${p.interval === "year" ? "Yearly" : "Monthly"}</b><small>${sub}</small></span>
+      <span class="pl-p"><b>${planMoney(p)}</b><small>/${per}</small></span>
+      ${p.interval === "year" && save > 0 ? `<span class="pl-badge">Save ${save}%</span>` : ""}</button>`;
+  };
+  const chosen = plans.find(p => p.id === UI.proPlan) || plans[0];
+  const after = chosen ? `${planMoney(chosen)} a ${chosen.interval === "year" ? "year" : "month"}` : "";
+  return `<div class="sheet-b prosheet">
+    <div class="pro-hero"><div class="pro-m" aria-hidden="true">${mascotSVG("wave")}</div>
+      <span class="pro-tag">${ico("sparkles","ico-sm")} ClockMe Pro</span><h2>${head[0]}</h2><p>${head[1]}</p></div>
+    <div class="pro-perks">${perks.map(([i,t,d]) => `<div class="pk"><span class="sq">${ico(i)}</span><span><b>${t}</b><small>${d}</small></span></div>`).join("")}</div>
+    <div class="plans" role="radiogroup" aria-label="Choose a plan">${card(y)}${card(m)}</div>
+    <button class="btn big" id="probuy" data-act="buyPro">${n ? `Start ${n}-day free trial` : "Continue"}</button>
+    <p class="pro-fine">${n ? `Free for ${n} days, then ${after}. Cancel any time in Profile before the trial ends and you won't be charged.` : `${after}. Cancel any time in Profile.`} Payments are handled securely by Stripe.${B.live ? "" : `<br><b>Test mode:</b> use card 4242 4242 4242 4242, any future date and any CVC.`}</p>
+    ${S.settings.pro && S.settings.pro.pass ? `<button class="btn ghost" data-act="managePro">Manage your subscription</button>` : `<p class="pro-fine">Already Pro on another phone? Restore the backup from that phone in Profile.</p>`}
+  </div>`;
+}
+
 /* On the web (Vercel) rota photos go to ClockMe's own /api/read-rota, which holds the AI key on the server. */
 const HOSTED = !window.claude && /^https?:$/.test(location.protocol);
 const blobToB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(b); });
@@ -3478,7 +3652,8 @@ function hostedReader(){
       const img = opts.images && opts.images[0];
       if(img){ body.image = await blobToB64(img); body.mediaType = img.type || "image/jpeg"; }
       let r;
-      try{ r = await fetch("/api/read-rota", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body), signal:opts.signal}); }
+      const pass = (S.settings.pro && S.settings.pro.pass) || "";
+      try{ r = await fetch("/api/read-rota", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, pass ? {"X-ClockMe-Pass":pass} : {}), body:JSON.stringify(body), signal:opts.signal}); }
       catch(e){ throw {code: e && e.name === "AbortError" ? "cancelled" : "upstream_error"}; }
       if(!r.ok){ const err = await r.json().catch(() => ({})); throw {code: err.code || (r.status === 429 ? "rate_limited" : "upstream_error")}; }
       return r.json();
@@ -3514,6 +3689,7 @@ async function readRoster(){
   }catch(e){
     const c = e && e.code;
     if(c === "cancelled"){ d.status = "idle"; }
+    else if(c === "pro_required"){ d.status = "idle"; if(S.settings.pro) S.settings.pro.checkedAt = 0; refreshBilling(true); openPro("rota"); return; }
     else { d.status = "error"; d.code = c || "unknown"; d.msg = c === "not_setup" ? "Rota reading isn't switched on yet. Paste the rota as text, or add your shifts by hand." : c === "image_too_large" ? "That photo is too big. Try a screenshot instead." : c === "images_unavailable" ? "Photos can't be read right now. Paste the rota as text instead." : c === "sampling_disabled" ? "Rota reading isn't available on your account right now." : c === "session_expired" ? "Your sign-in expired. Close and reopen ClockMe." : c === "refused" ? "That image couldn't be read. Try a screenshot of just your shifts." : c === "not_granted" ? "ClockMe wasn't allowed to read the rota. Allow it when asked, or add shifts by hand." : c === "rate_limited" ? "Too many requests right now. Try again in a minute." : c === "too_many" ? "You've read a lot of rotas in a short time. Try again in a bit, or paste it as text." : c === "busy_today" ? "Rota reading is busy today. Paste the rota as text, or try again tomorrow." : c === "image_rejected" ? "That image couldn't be read. Try a JPG or PNG screenshot." : c === "invalid_json" ? "The rota couldn't be read clearly. Try again or paste it as text." : "Something went wrong reading the rota. Try again."; }
   }
   track("rota_read", {from: UI.importFile ? "photo" : "text", result: d.status, error: d.code || null, shifts: (d.results || []).length});
@@ -3522,6 +3698,10 @@ async function readRoster(){
 
 const A = {
   tab(el){ UI.tab = el.dataset.tab; UI.stack = []; UI.selBar = null; render(); window.scrollTo(0,0); track("tab_opened", {tab: UI.tab}); },
+  pickPlan(el){ UI.proPlan = el.dataset.v; render(); },
+  buyPro(){ startCheckout(); },
+  managePro(){ openPortal(); },
+  openProSheet(){ isPro() && proSub() ? openPortal() : openPro("profile"); },
   statsYes(){ setStats(true); render(); toast("Thanks! Polo appreciates it"); },
   statsNo(){ setStats(false); render(); toast("No problem. Nothing is shared"); },
   push(el){ UI.stack.push({page:el.dataset.page || "jobs"}); UI.selBar = null; render(); window.scrollTo(0,0); },
@@ -3541,7 +3721,7 @@ const A = {
   newGoal(){ const t = startOfDay(Date.now()); UI.sheet = {kind:"goal", data:{id:null, title:"", subtitle:"", icon:"plane", color:"#2DB52D", target:1000, start:t, deadline:addDays(t,90)}}; render(); },
   editName(){ UI.sheet = {kind:"name", data:{name:S.settings.name, email:S.settings.email}}; render(); },
   openRoster(){ UI.sheet = {kind:"roster", data:JSON.parse(JSON.stringify(Object.assign({}, S.roster, {on: S.roster.on || !S.roster.entries.length, months: S.roster.months || 2, backfill:false})))}; render(); },
-  openImport(){ const j = activeJobs()[0]; UI.importFile = null; if(UI.importURL){ URL.revokeObjectURL(UI.importURL); UI.importURL = null; }
+  openImport(){ if(!proOK("rota")) return; const j = activeJobs()[0]; UI.importFile = null; if(UI.importURL){ URL.revokeObjectURL(UI.importURL); UI.importURL = null; }
     UI.sheet = {kind:"import", data:{text:"", name:S.settings.name, jobId:j?j.id:null, status:"idle", results:[], warning:"", msg:""}, returnTo: UI.sheet && UI.sheet.kind==="roster" ? UI.sheet : null}; render(); },
   openBusiness(){ UI.sheet = {kind:"business", data:Object.assign({}, S.business), returnTo: UI.sheet}; render(); },
   openPay(){ UI.sheet = {kind:"pay", data:{payFreq:S.settings.payFreq, payday:S.settings.payday || toD(Date.now())}}; render(); },
@@ -3578,7 +3758,7 @@ const A = {
   shiftType(el){ const d = UI.sheet.data; d.type = el.dataset.v; const j = jobById(d.jobId); if(d.type !== "work" && !d.id){ d.extraPct = 0; d.tips = 0; } if(d.type==="holiday" && j && !d.id){ d.rate = j.rate; } render(); },
   quickTime(el){ const d = UI.sheet.data, [a,b] = el.dataset.v.split("–"); d.start = atTime(d.start, a); d.endTime = b; if(!d.breakTouched) d.breakMin = breakFor(jobById(d.jobId), d.start, resolvedEnd(d)); render(); },
   bookHoliday(){ if(!activeJobs().length){ A.newJob(); return; } openShift(null, Date.now(), "holiday"); },
-  openPayslip(){ const [f,t] = defaultPayslipRange(); UI.sheet = {kind:"payslip", data:{from:f, to:t, gross:"", net:""}}; render(); },
+  openPayslip(){ if(!proOK("payslip")) return; const [f,t] = defaultPayslipRange(); UI.sheet = {kind:"payslip", data:{from:f, to:t, gross:"", net:""}}; render(); },
   delPayslip(el){ S.payslips = S.payslips.filter(p=>p.id!==el.dataset.id); save(); render(); },
   shiftView(el){ UI.shiftView = el.dataset.v; if(UI.shiftView === "calendar"){ UI.calMonth = Date.now(); UI.calDay = toD(Date.now()); } render(); },
   calPrev(){ const m = new Date(UI.calMonth); UI.calMonth = new Date(m.getFullYear(), m.getMonth()-1, 1).getTime(); UI.calDay = null; render(); },
@@ -3638,6 +3818,7 @@ const A = {
     UI.sheet = {kind:"roster", data:base}; render(); toast("Check your week, then tap Save");
   },
   newInvoice(){
+    if(!proOK("invoice")) return;
     const jobs = selfJobs();
     if(!jobs.length){ dialog("No self-employed jobs yet", "Invoices are made from jobs you invoice for. Open a job and turn on \"Self-employed\".", [{label:"Open jobs", run:()=>{ UI.stack.push({page:"jobs"}); render(); }}]); return; }
     const p = invoicePresets().lastWeek;
@@ -3655,7 +3836,7 @@ const A = {
   async invCopy(el){ const inv = S.invoices.find(i=>i.id===el.dataset.id); try{ await navigator.clipboard.writeText(invoiceText(inv)); toast("Invoice copied as text"); }catch(e){ toast("Copy isn't available here"); } },
   invMenu(el){ const inv = S.invoices.find(i=>i.id===el.dataset.id); dialog(inv.number, "", [
     {label:"Edit invoice", run:()=>{ UI.sheet = {kind:"invoice", data:{id:inv.id, jobId:inv.jobId, number:inv.number, issue:inv.issue, preset:"custom", from:inv.from, to:inv.to, includeScheduled:inv.lines.some(l=>/\(booked\)$/.test(l.desc||"")), skipInvoiced:true, group:"shift", extras:inv.lines.filter(l=>l.extra).map(l=>({desc:l.desc, amount:l.amount})), notes:inv.notes, status:inv.status}}; render(); }},
-    {label:"Make a copy for the next period", run:()=>{ const days = Math.round((inv.to - inv.from)/DAY)+1; UI.sheet = {kind:"invoice", data:{id:null, jobId:inv.jobId, number:invNumber(S.business.next||1), issue:startOfDay(Date.now()), preset:"custom", from:addDays(inv.to,1), to:addDays(inv.to,days), includeScheduled:false, skipInvoiced:true, group:"shift", extras:[], notes:inv.notes, status:"draft"}}; render(); }},
+    {label:"Make a copy for the next period", run:()=>{ if(!proOK("invoice")) return; const days = Math.round((inv.to - inv.from)/DAY)+1; UI.sheet = {kind:"invoice", data:{id:null, jobId:inv.jobId, number:invNumber(S.business.next||1), issue:startOfDay(Date.now()), preset:"custom", from:addDays(inv.to,1), to:addDays(inv.to,days), includeScheduled:false, skipInvoiced:true, group:"shift", extras:[], notes:inv.notes, status:"draft"}}; render(); }},
     {label:"Delete invoice", danger:true, run:()=>dialog(`Delete ${inv.number}?`, "The shifts stay and can be invoiced again.", [{label:"Delete", danger:true, run:()=>{ for(const s of S.shifts) if(s.invoiceId===inv.id) delete s.invoiceId; S.invoices = S.invoices.filter(i=>i.id!==inv.id); UI.stack.pop(); save(); render(); }}])}
   ]); },
   clock(){
@@ -4131,6 +4312,7 @@ if(S.settings.onboarded && syncRoster()) save();
 render();
 setTimeout(connect, 0);
 startStats();
+(() => { const back = handleBillingReturn(); refreshBilling(back === "portal"); })();
 </script>
 <script>if("serviceWorker" in navigator && location.protocol === "https:") addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 </body>

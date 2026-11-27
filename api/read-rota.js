@@ -3,6 +3,8 @@
 // Until it's set, this answers 503 "not_setup" and the app tells people to paste the rota as text.
 // Upstash Redis (optional) caps how often it can be used, so the AI key can't be run up: see lib/ratelimit.js.
 import { check, who } from "../lib/ratelimit.js";
+// Once ClockMe Pro is set up in Stripe, reading rotas needs Pro (lib/billing.js).
+import { proGate } from "../lib/billing.js";
 
 export const config = { maxDuration: 60 };
 
@@ -28,6 +30,9 @@ export default async function handler(req, res) {
   const { prompt, image, mediaType } = req.body || {};
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 20000) return res.status(400).json({ code: "bad_request" });
   if (image != null && (typeof image !== "string" || image.length > 6_000_000)) return res.status(413).json({ code: "image_too_large" });
+
+  const gate = await proGate(req);
+  if (gate && !gate.ok) return res.status(402).json({ code: "pro_required" });
 
   const id = who(req), day = new Date().toISOString().slice(0, 10);
   const lim = await check([
