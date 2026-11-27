@@ -36,3 +36,13 @@ test("optional services stay off until configured: no Sentry or Turnstile script
   if (!cfg.sentry) { assert.ok(!html.includes("/vendor/monitor.min.js")); assert.ok(!/sentry\.io/.test(csp)); }
   if (!cfg.turnstile) { assert.ok(!html.includes("challenges.cloudflare.com")); assert.ok(!csp.includes("frame-src")); }
 });
+
+test("upgrade-insecure-requests comes from the Vercel header, not the page (Safari applies a <meta> one to localhost)", () => {
+  const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+  const csp = html.match(/Content-Security-Policy" content="([^"]+)"/)[1];
+  assert.ok(!csp.includes("upgrade-insecure-requests"));
+  const v = JSON.parse(readFileSync(new URL("../../vercel.json", import.meta.url), "utf8"));
+  const all = v.headers.find((h) => h.source === "/(.*)").headers;
+  assert.ok(all.some((h) => h.key === "Content-Security-Policy" && h.value === "upgrade-insecure-requests"));
+  assert.ok(all.some((h) => h.key === "Strict-Transport-Security"));
+});

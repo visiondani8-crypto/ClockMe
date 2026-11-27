@@ -52,7 +52,8 @@ const csp = [
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'self'",
-  "upgrade-insecure-requests",
+  // upgrade-insecure-requests is sent as an HTTP header by Vercel (vercel.json), not here: in a <meta> tag,
+  // Safari applies it to http://localhost too, which breaks local development and the Safari tests.
 ].join("; ");
 
 const head = `<meta http-equiv="Content-Security-Policy" content="${csp}">
