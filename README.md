@@ -17,3 +17,10 @@ Hosted on Vercel. Every push to `main` deploys automatically.
 | --- | --- |
 | `ANTHROPIC_API_KEY` | Turns on reading rota photos. Without it the app asks people to paste the rota as text. |
 | `CLOCKME_MODEL` | Optional. The Claude model used for rota reading. |
+
+## Usage stats (PostHog, EU Cloud)
+
+After setup, Home asks once whether to share anonymous usage stats, and Profile → Account & privacy has a switch for it.
+Nothing loads or is stored until the person says yes. Events record which features get used
+(shift_saved, clocked_in, rota_read, invoice_saved, tab_opened and similar). They never include names, emails, pay, rates, tax or notes.
+Autocapture, heatmaps and session replay are off. The project token is public by design and is set in the build (site.env).

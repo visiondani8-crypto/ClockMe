@@ -17,6 +17,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icons/favicon-64.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<script>window.CLOCKME_CFG={"posthog": {"key": "phc_sxitiuxkBJr4HkJHbwaeCyG8fadq7MYEZrKqrqAACRgZ", "host": "https://eu.i.posthog.com", "defaults": "2026-08-30"}};</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1143,6 +1144,17 @@ h2{font-weight:700;letter-spacing:-.02em}
 .tcard > .tface{margin-top:auto}
 .tcard > :last-child{margin-bottom:auto}
 .signup .tcard{gap:14px}
+/* v18: usage stats ask on Home */
+.statsask{display:flex;gap:12px;align-items:flex-start;padding:14px 16px 14px 10px;animation:saIn .5s cubic-bezier(.2,.9,.3,1.2) both}
+.statsask .sa-m{flex:0 0 64px;height:64px;display:flex;align-items:flex-end;justify-content:center}
+.statsask .sa-m svg{width:64px;height:64px;overflow:visible}
+.statsask .sa-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.statsask b{font-family:var(--display, inherit);font-size:16px;letter-spacing:-.01em;color:var(--text)}
+.statsask p{margin:0;font-size:13px;line-height:1.4;color:var(--muted)}
+.statsask .sa-a{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.statsask .sa-a .btn{min-height:38px;padding:8px 16px;font-size:14px}
+@keyframes saIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.statsask{animation:none}}
 </style>
 </head>
 <body>
@@ -2242,6 +2254,7 @@ function homeView(C){
       <button class="act" data-act="newShift"><span class="ball">${ico("plus")}</span>Add shift</button>
       <button class="act" data-act="openRoster"><span class="ball">${ico("calendar-days")}</span>Roster</button>
     </div>
+    ${statsCardHTML()}
     ${cards.length?`<div class="list">${cards.join("")}</div>`:""}
     ${(()=>{ const ch = activeJobs().reduce((a2,j) => { const c = contractOn(j, ws); return a2 + (c && +c.hours || 0); }, 0);
       const ex14 = Array.from({length:14}, (_,i) => { const d = addDays(startOfDay(Date.now()), i-13), l = S.shifts.filter(x => x.start >= d && x.start < addDays(d,1) && !isFuture(x)); const tt = C.total(l); return l.length ? Math.max(.15, tt.premium + tt.ot) : 0; });
@@ -2457,6 +2470,7 @@ function profileView(C){
     <div><div class="glabel">Account & privacy</div><div class="group">
       ${item("user-round","Your details",esc(st.email||"Add email"),"editName")}
       ${item("lock","Passcode lock",st.pinOn?"On":"Off","pinMenu")}
+      ${statsAvailable()?`<div class="item"><span class="sq">${ico("chart-pie")}</span><span class="t">Share anonymous usage <span class="xs muted">(never pay or names)</span></span>${toggleHTML("tg-stats",'data-stats="1"',statsChoice()==="yes")}</div>`:""}
       <div class="item" style="flex-direction:column;align-items:stretch;padding:10px 0"><div class="row"><span class="sq">${ico("scale")}</span><span class="t">Age group <span class="xs muted">(minimum wage check)</span></span></div>
         <div class="chips" style="margin:8px 0 0;padding:0;flex-wrap:wrap">${AGE_BANDS.map(([k,l])=>`<button class="fchip ${(st.ageBand||"21+")===k?"on":""}" data-act="setAge" data-v="${k}">${l}</button>`).join("")}</div></div></div></div>
     <div><div class="glabel">Getting paid</div><div class="group">
@@ -3290,6 +3304,7 @@ function finishOnboarding(){
   const steps = ["Saving your details", job ? `Adding ${job.name}` : null, S.settings.showTakeHome ? "Setting up your tax" : null, S.roster.on ? "Filling your calendar" : null, S.goals.length ? "Setting your goal" : null, "Working out your pay", "All done!"].filter(Boolean);
   syncRoster(); save(); UI.obDraft = null; UI.ob = 0; UI.auth = null; UI.tab = "home"; UI.stack = [];
   window.scrollTo(0,0); UI.noEnter = true; render(); UI.noEnter = false;
+  track("setup_finished", setupSummary());
   poloLoader(from, steps, () => {
     lastView = ""; render(); // the app rises in as Polo bursts
     setTimeout(() => { const lm = document.querySelector(".logo .mascot"); if(lm) lm.classList.add("landed"); mascotHappy(900); }, 420);
@@ -3320,7 +3335,7 @@ function toast(t, actionLabel, action){
   document.body.appendChild(el); clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.remove(), actionLabel ? 5000 : 2000);
 }
 function buzz(){ try{ navigator.vibrate && navigator.vibrate(10); }catch(e){} }
-function clockIn(j, planId){ buzz(); S.clock = {jobId:j.id, start:Date.now(), breakStart:null, breakSec:0, planId:planId || null}; save(); toast(`Clocked in · ${j.name}`); render(); setTimeout(() => boop(), 60); }
+function clockIn(j, planId){ buzz(); S.clock = {jobId:j.id, start:Date.now(), breakStart:null, breakSec:0, planId:planId || null}; save(); track("clocked_in", {from_roster: !!planId}); toast(`Clocked in · ${j.name}`); render(); setTimeout(() => boop(), 60); }
 async function saveFile(filename, data){
   let dl = null;
   try{ dl = window.claude && claude.use ? await claude.use("downloads") : null; }catch(e){}
@@ -3397,6 +3412,61 @@ async function prepRotaImage(file){
   }catch(e){}
   return null; // the browser couldn't open it
 }
+/* ============ Usage stats (PostHog, EU Cloud) ============
+   Website build only, and only after the person says yes (Profile can turn it off again).
+   Events carry what was used, never who or how much: no names, emails, pay, rates, tax, times or notes.
+   Autocapture, heatmaps and session replay stay off because they would pick up on-screen text such as pay. */
+const PH = (window.CLOCKME_CFG || {}).posthog || null;
+const STATS_KEY = "clockme-stats";
+const statsAvailable = () => HOSTED && !!(PH && PH.key && PH.host);
+function statsChoice(){ try{ return localStorage.getItem(STATS_KEY) || ""; }catch(e){ return ""; } }
+let phLoaded = false;
+function startStats(){
+  if(phLoaded || !statsAvailable() || statsChoice() !== "yes") return;
+  phLoaded = true;
+  try{
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init(PH.key, {
+      api_host: PH.host,
+      defaults: PH.defaults,
+      persistence: "localStorage",
+      person_profiles: "identified_only",
+      autocapture: false,
+      enable_heatmaps: false,
+      capture_dead_clicks: false,
+      disable_session_recording: true,
+      capture_exceptions: true,
+      mask_all_text: true,
+      mask_all_element_attributes: true
+    });
+    const standalone = !!(window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+    posthog.register({app_version:"1.0", installed: standalone});
+  }catch(e){ phLoaded = false; }
+}
+const statsOn = () => phLoaded && statsChoice() === "yes";
+function track(event, props){ if(!statsOn()) return; try{ posthog.capture(event, props || {}); }catch(e){} }
+function setupSummary(){
+  const st = S.settings;
+  return {work_type: st.workType, country: st.region, jobs: S.jobs.length, roster_on: !!S.roster.on, goals: S.goals.length,
+    shifts: S.shifts.filter(s => !isFuture(s)).length, take_home_on: !!st.showTakeHome, passcode_on: !!st.pinOn};
+}
+function setStats(on){
+  try{ localStorage.setItem(STATS_KEY, on ? "yes" : "no"); }catch(e){}
+  if(!on){ if(phLoaded) try{ posthog.opt_out_capturing(); }catch(e){} return; }
+  if(phLoaded){ try{ posthog.opt_in_capturing(); }catch(e){} }
+  else startStats();
+  track("stats_turned_on", setupSummary());
+}
+function statsCardHTML(){
+  if(!statsAvailable() || statsChoice() || !S.settings.onboarded) return "";
+  return `<div class="statsask glass" role="region" aria-label="Usage stats">
+    <div class="sa-m" aria-hidden="true">${mascotSVG("bulb")}</div>
+    <div class="sa-b"><b>Help Polo make ClockMe better?</b>
+      <p>Share anonymous stats on which features get used. Never your pay, name or tax details. You can change this in Profile.</p>
+      <div class="sa-a"><button class="btn" data-act="statsYes">Sure</button><button class="btn ghost" data-act="statsNo">No thanks</button></div></div>
+  </div>`;
+}
+
 /* On the web (Vercel) rota photos go to ClockMe's own /api/read-rota, which holds the AI key on the server. */
 const HOSTED = !window.claude && /^https?:$/.test(location.protocol);
 const blobToB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(b); });
@@ -3446,11 +3516,14 @@ async function readRoster(){
     if(c === "cancelled"){ d.status = "idle"; }
     else { d.status = "error"; d.code = c || "unknown"; d.msg = c === "not_setup" ? "Rota reading isn't switched on yet. Paste the rota as text, or add your shifts by hand." : c === "image_too_large" ? "That photo is too big. Try a screenshot instead." : c === "images_unavailable" ? "Photos can't be read right now. Paste the rota as text instead." : c === "sampling_disabled" ? "Rota reading isn't available on your account right now." : c === "session_expired" ? "Your sign-in expired. Close and reopen ClockMe." : c === "refused" ? "That image couldn't be read. Try a screenshot of just your shifts." : c === "not_granted" ? "ClockMe wasn't allowed to read the rota. Allow it when asked, or add shifts by hand." : c === "rate_limited" ? "Too many requests right now. Try again in a minute." : c === "image_rejected" ? "That image couldn't be read. Try a JPG or PNG screenshot." : c === "invalid_json" ? "The rota couldn't be read clearly. Try again or paste it as text." : "Something went wrong reading the rota. Try again."; }
   }
+  track("rota_read", {from: UI.importFile ? "photo" : "text", result: d.status, error: d.code || null, shifts: (d.results || []).length});
   if(UI.sheet && UI.sheet.kind === "import") render();
 }
 
 const A = {
-  tab(el){ UI.tab = el.dataset.tab; UI.stack = []; UI.selBar = null; render(); window.scrollTo(0,0); },
+  tab(el){ UI.tab = el.dataset.tab; UI.stack = []; UI.selBar = null; render(); window.scrollTo(0,0); track("tab_opened", {tab: UI.tab}); },
+  statsYes(){ setStats(true); render(); toast("Thanks! Polo appreciates it"); },
+  statsNo(){ setStats(false); render(); toast("No problem. Nothing is shared"); },
   push(el){ UI.stack.push({page:el.dataset.page || "jobs"}); UI.selBar = null; render(); window.scrollTo(0,0); },
   back(){ UI.stack.pop(); UI.selBar = null; render(); },
   openGoal(el){ UI.stack.push({page:"goal", id:el.dataset.id}); UI.selBar = null; render(); window.scrollTo(0,0); },
@@ -3528,11 +3601,12 @@ const A = {
     try{ await navigator.clipboard.writeText(lines.join("\n")); toast("Summary copied"); }catch(e){ toast("Copy isn't available here"); }
   },
   recover(){ UI.stack = []; UI.tab = "home"; UI.sheet = null; UI.dialog = null; render(); },
-  backup(){ saveFile(`ClockMe-backup-${toD(Date.now())}.json`, JSON.stringify(Object.assign({app:"ClockMe", exportedAt:new Date().toISOString()}, S), null, 1)).then(ok => { if(ok) toast("Backup saved"); }); },
+  backup(){ saveFile(`ClockMe-backup-${toD(Date.now())}.json`, JSON.stringify(Object.assign({app:"ClockMe", exportedAt:new Date().toISOString()}, S), null, 1)).then(ok => { if(ok) track("backup_saved"); if(ok) toast("Backup saved"); }); },
   help(){ UI.sheet = {kind:"help", data:{}}; render(); },
   wipe(){ dialog("Delete all your data?", "Every shift, job, goal and invoice will be removed from this device and your account. Make a backup first if you might want it back.", [{label:"Delete everything", danger:true, run:()=>{
+    track("data_deleted"); if(phLoaded) try{ posthog.reset(); }catch(e){}
     const keep = S.settings.appearance; S = blank(); S.settings.appearance = keep; UI.stack = []; UI.tab = "home"; UI.obDraft = null; UI.ob = 0; save(); render(); toast("All data deleted"); }}]); },
-  rerunSetup(){ UI.obDraft = obDefaults(); UI.ob = 0; S.settings.onboarded = false; render(); window.scrollTo(0,0); },
+  rerunSetup(){ track("setup_rerun"); UI.obDraft = obDefaults(); UI.ob = 0; S.settings.onboarded = false; render(); window.scrollTo(0,0); },
   addEntry(el){ const j = activeJobs()[0]; const day = +el.dataset.day; const same = UI.sheet.data.entries.find(e=>e.day===day); UI.sheet.data.entries.push({id:uid(), day, jobId: same ? same.jobId : j.id, start:"09:00", end:"17:00", breakMin:j.breakMin||0}); render(); },
   delEntry(el){ UI.sheet.data.entries.splice(+el.dataset.i, 1); render(); },
   importRead(){ readRoster(); },
@@ -3598,14 +3672,14 @@ const A = {
     dialog("Clock in to which job?", "", jobs.map(j=>({label:j.name, run:()=>clockIn(j)})));
   },
   break(){ const ck = S.clock; if(!ck) return; if(ck.breakStart){ ck.breakSec += (Date.now()-ck.breakStart)/1000; ck.breakStart = null; } else ck.breakStart = Date.now(); save(); render(); },
-  export(){ exportCSV(); },
+  export(){ exportCSV(); track("csv_exported"); },
   period(el){ UI.period = el.dataset.p; UI.anchor = Date.now(); UI.selBar = null; render(); },
   prevP(){ UI.anchor = shiftPeriod(UI.period, interval(UI.period, UI.anchor)[0], -1); UI.selBar = null; render(); },
   nextP(){ UI.anchor = shiftPeriod(UI.period, interval(UI.period, UI.anchor)[0], 1); UI.selBar = null; render(); },
   nowP(){ UI.anchor = Date.now(); UI.selBar = null; render(); },
   bar(el){ const i = +el.dataset.i; UI.selBar = UI.selBar === i ? null : i; render(); },
   filter(el){ UI.filterJob = el.dataset.id || null; render(); },
-  setTheme(el){ S.settings.appearance = el.dataset.v; applyTheme(); save(); render(); },
+  setTheme(el){ S.settings.appearance = el.dataset.v; applyTheme(); save(); render(); track("theme_changed", {theme: el.dataset.v}); },
   setTake(el){ S.settings.showTakeHome = el.dataset.v === "1"; save(); render(); },
   goalMenu(el){ const g = S.goals.find(x=>x.id===el.dataset.id); dialog(g.title, "", [
     {label:"Edit goal", run:()=>{ UI.sheet = {kind:"goal", data:Object.assign({}, g)}; render(); }},
@@ -3650,6 +3724,7 @@ const A = {
         if(dupe){ S.shifts = S.shifts.filter(x=>x!==dupe); if(dupe.rosterKey) S.roster.skips = [...(S.roster.skips||[]), dupe.rosterKey]; }
         rec.clocked = true;
       }
+      track("shift_saved", {type: d.type || "work", source: d.fromClock ? "clock" : "manual", edited: !!old});
       UI.sheet = null; setTimeout(() => boop(), 450); toast(d.fromClock ? "Shift saved · clocked out" : d.type==="holiday" ? "Holiday saved" : d.type==="sick" ? "Sick day saved" : "Shift saved");
     } else if(s.kind==="job"){
       const rec = JSON.parse(JSON.stringify(d)); rec.name = rec.name.trim(); rec.rate = Math.max(0, r2(num(rec.rate))); rec.otMult = clamp(num(rec.otMult)||1, 1, 5); rec.otAfter = Math.max(0, num(rec.otAfter));
@@ -3658,6 +3733,7 @@ const A = {
       rec.weekday = rec.weekday.map(v=>clamp(num(v),-100,500)); rec.special = (rec.special||[]).filter(x=>x.date).map(x=>Object.assign(x,{pct:clamp(num(x.pct),-100,500)}));
       const i = S.jobs.findIndex(x=>x.id===rec.id);
       const oldRate = i>=0 ? +S.jobs[i].rate : null;
+      track("job_saved", {new: i < 0, self_employed: !!rec.selfEmployed});
       if(i>=0) S.jobs[i] = rec; else S.jobs.push(rec);
       const r = s.returnTo;
       if(r && (r.kind==="shift" || r.kind==="import") && !jobById(r.data.jobId)){ r.data.jobId = rec.id; if(r.kind==="shift"){ r.data.rate = rec.rate; r.data.breakMin = rec.breakMin; } }
@@ -3679,7 +3755,7 @@ const A = {
       const rec = Object.assign({}, d, {id:d.id||uid(), title:d.title.trim(), target:r2(num(d.target))});
       const prevG = S.goals.find(x=>x.id===rec.id); if(prevG && prevG.target !== rec.target) rec.celebrated = false;
       if(rec.deadline < rec.start) rec.deadline = rec.start;
-      const i = S.goals.findIndex(x=>x.id===rec.id); if(i>=0) S.goals[i] = rec; else S.goals.push(rec);
+      const i = S.goals.findIndex(x=>x.id===rec.id); track("goal_saved", {new: i < 0}); if(i>=0) S.goals[i] = rec; else S.goals.push(rec);
       UI.sheet = null; toast("Goal saved");
     } else if(s.kind==="roster"){
       const wasOn = S.roster.on;
@@ -3691,6 +3767,7 @@ const A = {
       const before = S.shifts.filter(x=>x.rosterKey && isFuture(x)).length;
       syncRoster();
       const after = S.shifts.filter(x=>x.rosterKey && isFuture(x)).length;
+      track("roster_saved", {on: !!S.roster.on, shifts_a_week: S.roster.entries.length});
       UI.sheet = null;
       if(S.roster.on) toast(`Calendar filled until ${dm(rosterHorizon()-DAY)} · ${after} upcoming shift${after===1?"":"s"}`, "View", () => { UI.tab = "shifts"; UI.stack = []; UI.shiftView = "calendar"; UI.calMonth = Date.now(); UI.calDay = toD(Date.now()); render(); window.scrollTo(0,0); });
       else toast("Auto-fill turned off");
@@ -3704,6 +3781,7 @@ const A = {
         S.invoices = S.invoices.map(i => i.id === d.id ? inv : i);
       } else { inv.id = uid(); inv.status = "draft"; S.invoices.push(inv); }
       for(const sh of S.shifts) if(inv.shiftIds.includes(sh.id)) sh.invoiceId = inv.id;
+      track("invoice_saved", {new: !d.id, shifts: inv.shiftIds.length});
       const m = String(d.number).match(/(\d+)\s*$/); if(m) S.business.next = Math.max(+S.business.next||1, +m[1] + 1);
       UI.sheet = null;
       if(!d.id) UI.stack.push({page:"invoice", id:inv.id});
@@ -3717,6 +3795,7 @@ const A = {
       const C = lastC || context(), exp = gross(C.total(payslipShifts(d.from, d.to)));
       S.payslips.push({id:uid(), from:startOfDay(d.from), to:startOfDay(d.to), expected:exp, gross:r2(num(d.gross)), net:r2(num(d.net)), createdAt:Date.now()});
       const [cls] = payslipVerdict(r2(num(d.gross) - exp));
+      track("payslip_checked", {result: cls});
       UI.sheet = null; toast(cls === "ok" ? "Payslip matches. Saved." : "Check saved");
     } else if(s.kind==="name"){ S.settings.name = d.name.trim(); S.settings.email = String(d.email||"").trim(); UI.sheet = null; toast("Details saved"); }
     save(); render();
@@ -3879,6 +3958,11 @@ function onField(ev){
     const b = document.getElementById("obnext"); if(b && obSteps()[UI.ob]==="name") b.disabled = !(UI.obDraft.name.trim() && validEmail(UI.obDraft.email));
     const em = document.getElementById("ob-email-msg"); if(em && el.id==="ob-email") em.innerHTML = emailMsg(UI.obDraft);
     if(el.dataset.rerender && ev.type === "change") render();
+    return;
+  }
+  if(el.dataset.stats !== undefined){
+    if(ev.type !== "change") return;
+    setStats(el.checked); toast(el.checked ? "Thanks! Usage stats on" : "Usage stats off"); render();
     return;
   }
   if(el.dataset.set !== undefined){
@@ -4046,6 +4130,7 @@ loadLocal(); applyTheme(); UI.locked = !!S.settings.pinOn;
 if(S.settings.onboarded && syncRoster()) save();
 render();
 setTimeout(connect, 0);
+startStats();
 </script>
 <script>if("serviceWorker" in navigator && location.protocol === "https:") addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 </body>
