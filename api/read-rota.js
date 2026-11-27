@@ -1,7 +1,15 @@
 // ClockMe: reads a rota photo or text with Claude and returns the shifts as JSON.
 // Needs ANTHROPIC_API_KEY set in Vercel (Project → Settings → Environment Variables).
 // Until it's set, this answers 503 "not_setup" and the app tells people to paste the rota as text.
+// Upstash Redis (optional) caps how often it can be used, so the AI key can't be run up: see lib/ratelimit.js.
+import { check, who } from "../lib/ratelimit.js";
+
 export const config = { maxDuration: 60 };
+
+const n = (v, d) => { const x = parseInt(v, 10); return Number.isFinite(x) && x > 0 ? x : d; };
+const PER_HOUR = n(process.env.ROTA_PER_HOUR, 15);   // one person, per hour
+const PER_DAY = n(process.env.ROTA_PER_DAY, 40);     // one person, per day
+const ALL_DAY = n(process.env.ROTA_DAILY_CAP, 1000); // everyone together, per day
 
 const MODEL = process.env.CLOCKME_MODEL || "claude-sonnet-5-5";
 const TYPES = /^image\/(jpeg|png|webp|gif)$/;
@@ -20,6 +28,17 @@ export default async function handler(req, res) {
   const { prompt, image, mediaType } = req.body || {};
   if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 20000) return res.status(400).json({ code: "bad_request" });
   if (image != null && (typeof image !== "string" || image.length > 6_000_000)) return res.status(413).json({ code: "image_too_large" });
+
+  const id = who(req), day = new Date().toISOString().slice(0, 10);
+  const lim = await check([
+    { key: `rl:rota:h:${id}`, limit: PER_HOUR, window: 3600, scope: "you" },
+    { key: `rl:rota:d:${id}`, limit: PER_DAY, window: 86400, scope: "you" },
+    { key: `rl:rota:all:${day}`, limit: ALL_DAY, window: 90000, scope: "everyone" },
+  ]);
+  if (!lim.ok) {
+    res.setHeader("Retry-After", String(lim.retryAfter));
+    return res.status(429).json({ code: lim.scope === "everyone" ? "busy_today" : "too_many", retryAfter: lim.retryAfter });
+  }
 
   const content = [];
   if (image) content.push({ type: "image", source: { type: "base64", media_type: TYPES.test(mediaType) ? mediaType : "image/jpeg", data: image } });

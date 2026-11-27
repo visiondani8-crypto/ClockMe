@@ -24,3 +24,11 @@ After setup, Home asks once whether to share anonymous usage stats, and Profile 
 Nothing loads or is stored until the person says yes. Events record which features get used
 (shift_saved, clocked_in, rota_read, invoice_saved, tab_opened and similar). They never include names, emails, pay, rates, tax or notes.
 Autocapture, heatmaps and session replay are off. The project token is public by design and is set in the build (site.env).
+
+## Rate limits (Upstash Redis, optional)
+
+`api/read-rota.js` caps rota reading so the AI key can't be run up: 15 an hour and 40 a day per person,
+1,000 a day for everyone together. People are counted by a hashed IP, never the raw address.
+Connect Upstash for Redis from the Vercel Marketplace (it adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`),
+or set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` yourself. Change the caps with
+`ROTA_PER_HOUR`, `ROTA_PER_DAY` and `ROTA_DAILY_CAP`. Without Upstash the limits are simply off.
