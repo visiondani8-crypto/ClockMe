@@ -1,0 +1,68 @@
+# Nightly off-site backup of the Supabase database (the Free plan has no downloadable daily backups:
+# https://supabase.com/docs/guides/platform/backups). Uses `supabase db dump`, as Supabase recommends.
+#
+# Switched off until two repository secrets exist (GitHub → Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL     the session pooler connection string, with the database password
+#   BACKUP_PASSPHRASE   a long random passphrase, also kept in your password manager (without it a backup can't be opened)
+#
+# This repository is public, and workflow artifacts of public repositories can be downloaded by any signed-in
+# GitHub user, so the dump is encrypted (AES-256) before upload and the plain files never leave the runner.
+# Restore steps: docs/runbooks.md → "Restore the database".
+name: Database backup
+on:
+  schedule:
+    - cron: "23 2 * * *" # 02:23 UTC every night
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Check the backup secrets are set
+        id: gate
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::notice::Database backups are off. Add the SUPABASE_DB_URL and BACKUP_PASSPHRASE repository secrets to switch them on."
+            echo "on=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "on=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        if: steps.gate.outputs.on == 'true'
+        with:
+          version: 3.4.0
+      - name: Dump roles, schema and data, then encrypt
+        if: steps.gate.outputs.on == 'true'
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p out
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f out/roles.sql --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f out/schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f out/data.sql --use-copy --data-only
+          test -s out/schema.sql
+          NAME="clockme-db-$(date -u +%Y-%m-%dT%H%MZ).tar.gz.gpg"
+          tar -czf - -C out . | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 --symmetric --cipher-algo AES256 -o "$NAME" 3<<<"$BACKUP_PASSPHRASE"
+          rm -rf out
+          sha256sum "$NAME" | tee "$NAME.sha256"
+          echo "NAME=$NAME" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: steps.gate.outputs.on == 'true'
+        with:
+          name: ${{ env.NAME }}
+          path: |
+            ${{ env.NAME }}
+            ${{ env.NAME }}.sha256
+          retention-days: 30
+          if-no-files-found: error

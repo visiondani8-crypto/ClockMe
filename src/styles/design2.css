@@ -1,0 +1,113 @@
+/* ---------- v13b: fun type, Phosphor icons, new charts, springy motion ---------- */
+:root{--font:"Nunito",-apple-system,"SF Pro Text",system-ui,sans-serif;--display:"Fredoka","Nunito",system-ui,sans-serif;--bar-a:#FFC6DC;--bar-b:#FF82B2;--spring:cubic-bezier(.34,1.56,.64,1)}
+body{letter-spacing:0;font-weight:500}
+.bigt,h1,h2,.mtitle,.lw,.ttitle,.amount,.ltime,.tile2 b,.tl-h,.dpill b,.empty b,.goal-title,.stat b,.pbub,.phead b,.sheet-h b,.dlg .ttl b,.wlab,.tlab,.ftabs button,.btn,.tl-who b,.paycard b,.choice b,.region b,.acts .act,.qcount{font-family:var(--display)}
+.bigt{font-weight:600;letter-spacing:-.025em;line-height:1.04}
+.hello h1.bigt{font-size:35px;font-weight:600}
+h1{font-weight:600;letter-spacing:-.02em}
+h2{font-weight:600;letter-spacing:-.01em}
+.mtitle{font-weight:600;letter-spacing:-.025em}
+.amount{font-weight:600;letter-spacing:-.015em}
+.wcard .amount{font-weight:600}
+.tile2 b{font-weight:600;letter-spacing:-.02em}
+.tl-h{font-weight:500;letter-spacing:-.01em;font-size:22px}
+.tl-h span{font-weight:500}
+.lw{font-weight:600;font-size:21px;letter-spacing:-.02em}
+.ttitle{font-weight:600;letter-spacing:-.025em}
+.wbody .bigt{font-size:44px}
+.btn{font-weight:500;letter-spacing:.005em}
+.btn.big{font-size:18px}
+.ftabs button,.wlab,.tlab,.paycard b,.tl-who b,.choice b,.region b{font-weight:500}
+.dpill b{font-weight:500;font-size:18px}
+.acts .act{font-weight:500;font-size:13px}
+.empty b{font-weight:500;font-size:19px}
+.ltime{font-weight:600}
+.sheet-h b{font-weight:500;font-size:17px}
+.stat b{font-weight:500}
+
+/* Icons (Phosphor) */
+svg.pi{display:inline-block;flex:none;vertical-align:middle}
+.ico{width:22px;height:22px}
+.ico-sm{width:17px;height:17px}
+.tabbar .ico{width:26px;height:26px}
+.tabbar .t-fil{display:none}
+.tabbar button.on .t-reg{display:none}
+.tabbar button.on .t-fil{display:block}
+.ti{display:grid;place-items:center}
+.ti.pop{animation:tpop .55s var(--spring)}
+@keyframes tpop{0%{transform:scale(.6) rotate(-12deg)}60%{transform:scale(1.18) rotate(4deg)}100%{transform:none}}
+.iconbtn .ico{width:21px;height:21px}
+.tile.lg .ico{width:28px;height:28px}
+.item .sq .ico{width:19px;height:19px}
+
+/* Charts */
+.pchart{position:relative;margin-top:6px}
+.pbars{display:flex;gap:6px;height:calc(var(--h) + 60px);align-items:stretch}
+.pchart.many .pbars{gap:2px}
+.pcol{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;position:relative;padding:0}
+.pbar{display:block;width:min(30px,72%);height:var(--bh);border-radius:99px;background:linear-gradient(180deg,var(--bar-a),var(--bar-b));box-shadow:inset 0 -8px 12px -8px rgba(190,30,100,.35),0 10px 16px -12px rgba(240,80,140,.8);transform-origin:bottom;transition:transform .35s var(--spring),background .25s}
+.pbar.zero{background:var(--track);box-shadow:none}
+.pcol.fut .pbar{background:repeating-linear-gradient(135deg,rgba(255,130,178,.4) 0 2px,transparent 2px 7px);box-shadow:inset 0 0 0 1.5px rgba(255,130,178,.6)}
+.pcol.fut .pbar.zero{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.pcol.on .pbar{background:var(--ink);box-shadow:0 12px 20px -12px rgba(0,0,0,.6)}
+.pcol:active .pbar{transform:scaleY(.92)}
+.plab{font-size:12px;font-weight:800;color:var(--muted);height:22px;display:grid;place-items:center;padding:0 8px;border-radius:99px;white-space:nowrap;transition:background .2s,color .2s}
+.pcol.cur .plab{background:var(--ink);color:var(--on-ink)}
+.pchart.many .plab{font-size:10px;padding:0 3px}
+.pbub{position:absolute;bottom:calc(var(--bh) + 39px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--on-ink);font-size:13px;font-weight:500;padding:5px 10px;border-radius:11px;white-space:nowrap;animation:bub .5s var(--spring) both;z-index:2}
+.pbub:after{content:"";position:absolute;left:50%;bottom:-4px;width:9px;height:9px;background:inherit;transform:translateX(-50%) rotate(45deg);border-radius:2px}
+.pcol:first-child .pbub{left:0;transform:none}.pcol:first-child .pbub:after{left:14px}
+.pcol:last-child .pbub{left:auto;right:0;transform:none}.pcol:last-child .pbub:after{left:auto;right:9px;transform:rotate(45deg)}
+@keyframes bub{from{opacity:0;scale:.5;translate:0 10px}}
+.pavg{position:absolute;left:0;right:0;bottom:calc(30px + var(--y));border-top:2px dashed rgba(240,97,154,.5);pointer-events:none;z-index:1}
+.pavg span{position:absolute;left:0;top:-21px;font-size:10.5px;font-weight:800;color:#E0457B;background:rgba(255,255,255,.7);padding:2px 7px;border-radius:99px}
+:root[data-theme="dark"] .pavg span,:root[data-theme="darkpink"] .pavg span{background:rgba(0,0,0,.5)}
+@media (prefers-color-scheme: dark){:root:not([data-theme]) .pavg span{background:rgba(0,0,0,.5)}}
+.enter .pbar{animation:pgrow .95s var(--spring) both;animation-delay:calc(var(--i,0) * 60ms + .12s)}
+@keyframes pgrow{from{transform:scaleY(0)}}
+.wmore{align-self:flex-end;font-size:13px;font-weight:800;display:inline-flex;align-items:center;gap:2px;color:var(--muted);margin-top:-4px;padding:4px 0}
+.spark{width:100%;height:auto;display:block;overflow:visible}
+.spark-dot{fill:var(--card);stroke:#F0619A;stroke-width:2}
+.spark-pulse{animation:spulse 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spulse{0%,100%{transform:scale(.7);opacity:.35}50%{transform:scale(1.4);opacity:.12}}
+
+/* Springy, playful motion */
+button,.btn,.paycard,.tl-card,.dpill,.fchip,.iconbtn,.seg button,.ftabs button,.choice,.region,.qa button,.shift,.item,.swatch i,.cday,.daygrid button{transition:transform .4s var(--spring),background-color .2s,color .2s,box-shadow .25s,border-color .2s,width .4s var(--spring)}
+button:active:not([disabled]),.btn:active,label.btn:active{transform:scale(.94)}
+.acts .act:active{transform:none}
+.acts .act:active .ball{transform:scale(.84)}
+.acts .act .ball{transition:transform .45s var(--spring),background .2s}
+.tl-card:active,.paycard:active,.shift:active{transform:scale(.97)}
+.tabbar button:active{transform:scale(.9)}
+.tab-ind{transition:transform .55s cubic-bezier(.34,1.45,.5,1)}
+@keyframes rise{from{transform:translateY(22px) scale(.97);opacity:0}}
+.enter > .stack > *, .enter > .stack, .ob.enter .obbody > *{animation-timing-function:cubic-bezier(.34,1.3,.5,1)!important;animation-duration:.65s!important}
+.tlbody.anim .tl-row,.enter .tl-row{animation:rise .55s cubic-bezier(.34,1.3,.5,1) both;animation-delay:calc(var(--k,0) * 55ms)}
+.tlbody.anim .empty{animation:rise .5s cubic-bezier(.34,1.3,.5,1) both}
+.dpill.on{animation:pillOn .5s var(--spring)}
+@keyframes pillOn{0%{transform:scale(.85)}100%{transform:none}}
+.overlay.anim .sheet{animation:up .55s cubic-bezier(.34,1.25,.5,1)}
+@keyframes up{from{transform:translateY(60px);opacity:.3}}
+.toast{animation:toastIn .5s var(--spring)}
+.mascot.boop .m-all{animation:mboop .7s var(--spring)}
+@keyframes mboop{0%{transform:translateY(0) scale(1)}25%{transform:translateY(4px) scale(1.1,.88)}55%{transform:translateY(-14px) scale(.94,1.08)}100%{transform:none}}
+.logo .mascot,.mslot .mascot,.wpeek .mascot,.tface .mascot,.empty .mascot{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.enter .tile2{animation:rise .7s cubic-bezier(.34,1.35,.5,1) both}
+.enter .tile2.t2{animation-delay:.08s}.enter .tile2.t3{animation-delay:.14s}
+
+/* Layout fixes */
+.paycard{gap:12px;padding:13px 14px}
+.paycard > div:not(.tile):not(.amt){flex:1;min-width:0}
+.paycard .small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.paycard .amt{flex:none;max-width:42%}
+.paycard .amt .xs{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tlbody .chips{margin:0 -20px;padding:0 20px 2px}
+.stats .stat{background:var(--glass-bg);border:1px solid var(--glass-line);border-radius:20px}
+.cday{border-radius:14px;background:var(--glass-bg);border:1px solid var(--glass-line)}
+.cday.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.cal{gap:5px}
+.tlsum span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar .row{flex:none}
+.hello{display:flex;flex-direction:column}
+.pleg{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;color:#E0457B}
+.pleg i{width:16px;border-top:2px dashed rgba(240,97,154,.7)}

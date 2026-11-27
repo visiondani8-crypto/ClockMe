@@ -1,8 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build:check",
   "cleanUrls": true,
   "regions": [
     "lhr1"
+  ],
+  "redirects": [
+    {
+      "source": "/:dir(src|tests|scripts|config|test-results|playwright-report|lib|node_modules)/:path*",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/:file(package.json|package-lock.json|playwright.config.mjs|README.md)",
+      "destination": "/",
+      "permanent": false
+    }
   ],
   "headers": [
     {
@@ -45,6 +59,15 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
         }
       ]
     }

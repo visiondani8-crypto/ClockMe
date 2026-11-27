@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>ClockMe</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-lr66yv99PHX1G/+vOXp6VRBFjfqY1w8sf6qStTvuLno=' 'sha256-wuqJX4IAVRvs+zn4g5IYB/pal4QZDMoe/G/E1sQ3SxM=' 'sha256-tjSwpAxDeJwVSc5sgv4gACY09VrSgyu83i1kDWhePeE=' https://eu-assets.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="description" content="Track your shifts and see exactly what you'll be paid. Sunday and night extras, tax, payday, invoices and your rota, with Polo.">
 <meta name="theme-color" content="#EAF5FF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#050E1C" media="(prefers-color-scheme: dark)">
@@ -17,7 +18,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icons/favicon-64.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<script>window.CLOCKME_CFG={"posthog": {"key": "phc_sxitiuxkBJr4HkJHbwaeCyG8fadq7MYEZrKqrqAACRgZ", "host": "https://eu.i.posthog.com", "defaults": "2026-08-30"}};</script>
+<script>window.CLOCKME_CFG={"posthog":{"key":"phc_sxitiuxkBJr4HkJHbwaeCyG8fadq7MYEZrKqrqAACRgZ","host":"https://eu.i.posthog.com","defaults":"2026-08-30"}};</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1267,11 +1268,28 @@ h2{font-weight:700;letter-spacing:-.02em}
 .pro-row .d{color:var(--accent);font-weight:600}
 @media (max-width:350px){.pw-hero h2{font-size:29px}.pw-pp{font-size:24px}}
 @media (prefers-reduced-motion:reduce){.pw-polo,.pw-polo::before,.pw-foil,.pw-cta::after,.pw-spark i,.pw-glow i,.pw-perks li{animation:none}.pw-spark i{opacity:.6}}
+/* v21: accessibility fixes from the axe-core audit (WCAG 2.2 AA).
+   Every theme is checked by tests/e2e/a11y.spec.mjs; numbers below are contrast ratios on that theme's own surfaces. */
+
+/* Text colours. --green and --red stay as they are for bars, dots and badges; these are only for words and numbers. */
+:root{--muted:#4E6280; --green-text:#137033; --red-text:#B42318}                 /* light blue: 5.3–6.2 : 1 */
+:root[data-theme="white"]{--muted:#5E5C66}                                         /* 5.6–6.6 : 1 */
+:root[data-theme="lightpink"]{--muted:#7A4F63}                                     /* 6.0–6.7 : 1 */
+:root[data-theme="pink"]{--muted:#6A3550; --red-text:#8F1B12}                      /* 5.9–9.4 : 1 */
+:root[data-theme="dark"],:root[data-theme="darkpink"]{--green-text:#5FD35F; --red-text:#FF7A7F}
+:root[data-theme="dark"]{--muted:#8CA0BC}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){--muted:#8CA0BC; --green-text:#5FD35F; --red-text:#FF7A7F}}
+
+.g,.line .g,.right span.g,.shift .right span.g{color:var(--green-text)}
+.line .r,.right span.r,.danger,.danger-t{color:var(--red-text)}
+
+/* WCAG 2.2 target size (2.5.8): text links like "View all" get a 24px+ tap area without changing how they look */
+.link{min-height:32px;padding:4px 2px;margin:-4px -2px}
 </style>
 </head>
 <body>
 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div id="root"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" onerror="var x=document.createElement('script');x.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';document.head.appendChild(x)"></script>
+<script src="/vendor/jspdf.umd.min.js" defer></script>
 <script>
 "use strict";
 /* ============ Constants ============ */
@@ -1284,6 +1302,10 @@ const REGIONS = {
   custom:{title:"Other country",flag:"🌍",cur:"EUR",note:"A flat % you set. Use this for any other country."}
 };
 const LOANS = {none:["None",Infinity],plan1:["Plan 1",26900],plan2:["Plan 2",29385],plan4:["Plan 4 (Scotland)",33795],plan5:["Plan 5",25000]};
+/* Yearly repayment threshold on a date. 2026/27 above; from 6 April 2027: Plan 1 £28,005, Plan 2 £29,385, Plan 5 £26,025
+   (GOV.UK announcements of 10 August and 12 November 2026). Plan 4 for 2027/28 isn't announced yet, so it stays at £33,795. */
+const LOANS_2027 = {plan1:28005, plan2:29385, plan5:26025};
+const loanThreshold = (plan, ms = Date.now()) => (ms >= Date.UTC(2027,3,6) && LOANS_2027[plan]) || LOANS[plan][1];
 const CURRENCIES = ["GBP","EUR","USD","CAD","AUD","NZD","CHF","SEK","NOK","DKK","PLN","NGN","GHS","ZAR","KES","INR","AED","SGD","JPY"];
 const PALETTE = ["#2DB52D","#F07F22","#4A6CF7","#8E5CF6","#EC4899","#14B8A6","#E5484D","#6B6B70"];
 const JOB_ICONS = ["briefcase","shopping-cart","coffee","utensils","stethoscope","package","car","hammer","wrench","building-2","shopping-bag","laptop","graduation-cap","scissors","dumbbell","mic"];
@@ -1297,14 +1319,14 @@ function swatchesHTML(current){ return `<div class="swatches">${THEMES.map(([k,l
 const BANK_HOLS = {
   ew:{title:"England & Wales", d:{"2026-01-01":"New Year's Day","2026-04-03":"Good Friday","2026-04-06":"Easter Monday","2026-05-04":"Early May bank holiday","2026-05-25":"Spring bank holiday","2026-08-31":"Summer bank holiday","2026-12-25":"Christmas Day","2026-12-28":"Boxing Day (substitute)",
     "2027-01-01":"New Year's Day","2027-03-26":"Good Friday","2027-03-29":"Easter Monday","2027-05-03":"Early May bank holiday","2027-05-31":"Spring bank holiday","2027-08-30":"Summer bank holiday","2027-12-27":"Christmas Day (substitute)","2027-12-28":"Boxing Day (substitute)"}},
-  sco:{title:"Scotland", d:{"2026-01-01":"New Year's Day","2026-01-02":"2nd January","2026-04-03":"Good Friday","2026-05-04":"Early May bank holiday","2026-05-25":"Spring bank holiday","2026-08-03":"Summer bank holiday","2026-11-30":"St Andrew's Day","2026-12-25":"Christmas Day","2026-12-28":"Boxing Day (substitute)",
+  sco:{title:"Scotland", d:{"2026-01-01":"New Year's Day","2026-01-02":"2nd January","2026-04-03":"Good Friday","2026-05-04":"Early May bank holiday","2026-05-25":"Spring bank holiday","2026-06-15":"World Cup bank holiday","2026-08-03":"Summer bank holiday","2026-11-30":"St Andrew's Day","2026-12-25":"Christmas Day","2026-12-28":"Boxing Day (substitute)",
     "2027-01-01":"New Year's Day","2027-01-04":"2nd January (substitute)","2027-03-26":"Good Friday","2027-05-03":"Early May bank holiday","2027-05-31":"Spring bank holiday","2027-08-02":"Summer bank holiday","2027-11-30":"St Andrew's Day","2027-12-27":"Christmas Day (substitute)","2027-12-28":"Boxing Day (substitute)"}},
   ni:{title:"Northern Ireland", d:{"2026-01-01":"New Year's Day","2026-03-17":"St Patrick's Day","2026-04-03":"Good Friday","2026-04-06":"Easter Monday","2026-05-04":"Early May bank holiday","2026-05-25":"Spring bank holiday","2026-07-13":"Battle of the Boyne (substitute)","2026-08-31":"Summer bank holiday","2026-12-25":"Christmas Day","2026-12-28":"Boxing Day (substitute)",
     "2027-01-01":"New Year's Day","2027-03-17":"St Patrick's Day","2027-03-26":"Good Friday","2027-03-29":"Easter Monday","2027-05-03":"Early May bank holiday","2027-05-31":"Spring bank holiday","2027-07-12":"Battle of the Boyne","2027-08-30":"Summer bank holiday","2027-12-27":"Christmas Day (substitute)","2027-12-28":"Boxing Day (substitute)"}},
   ie:{title:"Ireland", d:{"2026-01-01":"New Year's Day","2026-02-02":"St Brigid's Day","2026-03-17":"St Patrick's Day","2026-04-06":"Easter Monday","2026-05-04":"May bank holiday","2026-06-01":"June bank holiday","2026-08-03":"August bank holiday","2026-10-26":"October bank holiday","2026-12-25":"Christmas Day","2026-12-26":"St Stephen's Day",
     "2027-01-01":"New Year's Day","2027-02-01":"St Brigid's Day","2027-03-17":"St Patrick's Day","2027-03-29":"Easter Monday","2027-05-03":"May bank holiday","2027-06-07":"June bank holiday","2027-08-02":"August bank holiday","2027-10-25":"October bank holiday","2027-12-25":"Christmas Day","2027-12-26":"St Stephen's Day"}},
   us:{title:"United States (federal)", d:{"2026-01-01":"New Year's Day","2026-01-19":"Martin Luther King Jr. Day","2026-02-16":"Washington's Birthday","2026-05-25":"Memorial Day","2026-06-19":"Juneteenth","2026-07-03":"Independence Day (observed)","2026-09-07":"Labor Day","2026-10-12":"Columbus Day","2026-11-11":"Veterans Day","2026-11-26":"Thanksgiving","2026-12-25":"Christmas Day",
-    "2027-01-01":"New Year's Day","2027-01-18":"Martin Luther King Jr. Day","2027-02-15":"Washington's Birthday","2027-05-31":"Memorial Day","2027-06-18":"Juneteenth (observed)","2027-07-05":"Independence Day (observed)","2027-09-06":"Labor Day","2027-10-11":"Columbus Day","2027-11-11":"Veterans Day","2027-11-25":"Thanksgiving","2027-12-24":"Christmas Day (observed)"}}
+    "2027-01-01":"New Year's Day","2027-01-18":"Martin Luther King Jr. Day","2027-02-15":"Washington's Birthday","2027-05-31":"Memorial Day","2027-06-18":"Juneteenth (observed)","2027-07-05":"Independence Day (observed)","2027-09-06":"Labor Day","2027-10-11":"Columbus Day","2027-11-11":"Veterans Day","2027-11-25":"Thanksgiving","2027-12-24":"Christmas Day (observed)","2027-12-31":"New Year's Day 2028 (observed)"}}
 };
 const defaultHolRegion = () => ({uk:"ew", scotland:"sco", ireland:"ie", us:"us"})[S.settings.region] || "ew";
 /* Minimum wage for the user's age group, on a given date. null where the app has no figure. */
@@ -1678,12 +1700,12 @@ function taxLines(emp, self){
       out.push(["Income tax", ukIncomeTax(ukTaxable, st.region === "scotland")]);
       if(emp > 0) out.push(["National Insurance", ukClass1(emp)]);
       if(self > 0) out.push(["Class 4 NI (self-employed)", ukClass4(selfAfterAllowance)]);
-      if(st.loan !== "none") out.push(["Student loan", Math.max(0, inc - LOANS[st.loan][1])*.09]);
+      if(st.loan !== "none") out.push(["Student loan", Math.max(0, inc - loanThreshold(st.loan))*.09]);
       if(st.postgrad) out.push(["Postgraduate loan", Math.max(0, inc-21000)*.06]);
       break;
     case "ireland": {
       const now = new Date(), y27 = now >= new Date(2027,0,1);
-      const band = y27 ? 46500 : 44000, credits = y27 ? 4125 : 4000, usc2 = y27 ? 30300 : 28700;
+      const band = y27 ? 46500 : 44000, credits = y27 ? 4250 : 4000, usc2 = y27 ? 30300 : 28700; // credits: personal + employee (or earned income), €2,125 each from 2027
       const prsi = now >= new Date(2027,9,1) ? .045 : now >= new Date(2026,9,1) ? .0435 : .042;
       out.push(["Income tax", Math.max(0, progressive(taxable, [[band,.2],[Infinity,.4]]) - credits)]);
       let usc = inc <= 13000 ? 0 : progressive(inc, [[12012,.005],[usc2,.02],[70044,.03],[Infinity,.08]]);
@@ -2479,7 +2501,7 @@ function shiftsView(C){
   const today = startOfDay(Date.now()), sel = UI.dayStrip != null ? UI.dayStrip : today, cal = UI.shiftView === "calendar";
   const right = `<button class="iconbtn glassbtn ${UI.searchOpen||q?"on":""}" data-act="toggleSearch" aria-label="Search shifts">${ico("search")}</button><button class="iconbtn glassbtn" data-act="openRoster" aria-label="Weekly roster">${ico("calendar-days")}</button><button class="iconbtn inkbtn" data-act="newShift" aria-label="Add shift">${ico("plus")}</button>`;
   const head = `${topbarHTML(right)}
-    <button class="mtitle" data-act="shiftView" data-v="${cal?"list":"calendar"}" aria-label="${cal?"Show day by day":"Show the whole month"}">${new Date(cal ? UI.calMonth : sel).toLocaleDateString(undefined,{month:"long",year:"numeric"})}<span class="${cal?"up":""}">${ico("chevron-down")}</span></button>`;
+    <button class="mtitle" data-act="shiftView" data-v="${cal?"list":"calendar"}" aria-label="${new Date(cal ? UI.calMonth : sel).toLocaleDateString(undefined,{month:"long",year:"numeric"})}, ${cal?"show day by day":"show the whole month"}">${new Date(cal ? UI.calMonth : sel).toLocaleDateString(undefined,{month:"long",year:"numeric"})}<span class="${cal?"up":""}">${ico("chevron-down")}</span></button>`;
   const chips = S.jobs.length>1?`<div class="chips"><button class="fchip ${!UI.filterJob?"on":""}" data-act="filter" data-id=""><i style="background:currentColor"></i>All jobs</button>${S.jobs.map(j=>`<button class="fchip ${UI.filterJob===j.id?"on":""}" data-act="filter" data-id="${j.id}"><i style="background:${j.color}"></i>${esc(j.name)}</button>`).join("")}</div>`:"";
   const search = (UI.searchOpen || q) ? `<div class="search">${ico("search","ico-sm")}<input id="shift-search" type="search" placeholder="Search shifts, notes or dates" value="${esc(UI.search||"")}" autocomplete="off"></div>` : "";
   if(cal) return `<div class="stack shifts" style="gap:16px">${head}${chips}${calendarHTML(C, allMatch)}</div>`;
@@ -2487,7 +2509,7 @@ function shiftsView(C){
     ${allMatch.length ? `<p class="xs muted" style="margin:0">${allMatch.length} shift${allMatch.length===1?"":"s"} found</p><div class="list">${allMatch.slice(0,60).map(s=>shiftRow(s,C)).join("")}</div>` : `<p class="small muted" style="margin:0;text-align:center">No shifts match "${esc(UI.search)}".</p>`}</div>`;
   const has = new Set(allMatch.map(s => toD(s.start)));
   const days = []; for(let i = -21; i <= 42; i++) days.push(addDays(today, i));
-  const strip = `<div class="dstrip" aria-label="Pick a day">${days.map(d => `<button class="dpill ${d===sel?"on":""} ${d===today?"today":""}" data-act="pickDay" data-v="${d}" aria-label="${dayMon(d)}"><b>${new Date(d).getDate()}</b><span>${WDS[new Date(d).getDay()]}</span>${has.has(toD(d))?"<i></i>":""}</button>`).join("")}</div>`;
+  const strip = `<div class="dstrip" aria-label="Pick a day">${days.map(d => `<button class="dpill ${d===sel?"on":""} ${d===today?"today":""}" data-act="pickDay" data-v="${d}" aria-pressed="${d===sel}" title="${dayMon(d)}"><b>${new Date(d).getDate()}</b><span>${WDS[new Date(d).getDay()]}</span>${has.has(toD(d))?"<i></i>":""}</button>`).join("")}</div>`;
   const up = allMatch.filter(s => isFuture(s) && s.start >= sel && s.start < addDays(sel, 15)).sort((a,b)=>a.start-b.start);
   const doneAll = allMatch.filter(s => !isFuture(s) && s.start < addDays(sel, 1));
   const lim = UI.doneLimit || 15;
@@ -3624,13 +3646,15 @@ async function claimCheckout(session, quiet){
     return false;
   }
 }
-async function refreshBilling(force){
+async function refreshBilling(force, returning){
   if(!HOSTED) return;
   try{ const r = await fetch("/api/billing"); if(r.ok){ UI.billing = await r.json(); try{ localStorage.setItem(BILL_KEY, JSON.stringify(UI.billing)); }catch(e){} } }catch(e){}
   if(!billingOn()){ render(); return; }
   let pend = null; try{ pend = localStorage.getItem(PENDING_KEY); }catch(e){}
   const pr = S.settings.pro;
-  if(pend && !(pr && pr.pass)) await claimCheckout(pend, true);
+  // Coming back from Stripe Checkout, handleBillingReturn claims it; claiming here too made two requests,
+  // and the later one could close whatever the person had just opened.
+  if(pend && !returning && !(pr && pr.pass)) await claimCheckout(pend, true);
   else if(pr && pr.pass && (force || Date.now() - (pr.checkedAt || 0) > 6*3600e3)){
     try{ setPro(await billApi({action:"status", pass:pr.pass})); }
     catch(e){ if(e.code === "bad_pass"){ delete S.settings.pro; save(); } }
@@ -3728,6 +3752,23 @@ function proSheet(){
 /* On the web (Vercel) rota photos go to ClockMe's own /api/read-rota, which holds the AI key on the server. */
 const HOSTED = !window.claude && /^https?:$/.test(location.protocol);
 const blobToB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(b); });
+/* Cloudflare Turnstile (only when config/public.json has turnstile.siteKey): an invisible check that the request
+   comes from a person on this page. Returns a one-use token, or "" when it's switched off or can't load. */
+function humanCheck(action){
+  const key = ((window.CLOCKME_CFG || {}).turnstile || {}).siteKey;
+  if(!key) return Promise.resolve("");
+  return new Promise(resolve => {
+    let tries = 0, done = false; const finish = t => { if(!done){ done = true; resolve(t || ""); } };
+    setTimeout(() => finish(""), 12000);
+    (function go(){
+      if(!window.turnstile){ if(++tries < 40) return setTimeout(go, 250); return finish(""); }
+      let box = document.getElementById("human-check");
+      if(!box){ box = document.createElement("div"); box.id = "human-check"; box.setAttribute("aria-live","polite"); document.body.appendChild(box); }
+      if(UI.turnstileId != null){ try{ turnstile.remove(UI.turnstileId); }catch(e){} }
+      UI.turnstileId = turnstile.render(box, { sitekey:key, action, appearance:"interaction-only", callback:finish, "error-callback":() => finish(""), "expired-callback":() => finish("") });
+    })();
+  });
+}
 function hostedReader(){
   return {
     limits: async () => ({maxPromptBytes:262144, images:{maxCount:1, maxInputBytes:20e6, mediaTypes:["image/jpeg","image/png","image/webp","image/gif"]}}),
@@ -3737,7 +3778,8 @@ function hostedReader(){
       if(img){ body.image = await blobToB64(img); body.mediaType = img.type || "image/jpeg"; }
       let r;
       const pass = (S.settings.pro && S.settings.pro.pass) || "";
-      try{ r = await fetch("/api/read-rota", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, pass ? {"X-ClockMe-Pass":pass} : {}), body:JSON.stringify(body), signal:opts.signal}); }
+      const check = await humanCheck("read_rota");
+      try{ r = await fetch("/api/read-rota", {method:"POST", headers:Object.assign({"Content-Type":"application/json"}, pass ? {"X-ClockMe-Pass":pass} : {}, check ? {"X-ClockMe-Check":check} : {}), body:JSON.stringify(body), signal:opts.signal}); }
       catch(e){ throw {code: e && e.name === "AbortError" ? "cancelled" : "upstream_error"}; }
       if(!r.ok){ const err = await r.json().catch(() => ({})); throw {code: err.code || (r.status === 429 ? "rate_limited" : "upstream_error")}; }
       return r.json();
@@ -3774,7 +3816,7 @@ async function readRoster(){
     const c = e && e.code;
     if(c === "cancelled"){ d.status = "idle"; }
     else if(c === "pro_required"){ d.status = "idle"; if(S.settings.pro) S.settings.pro.checkedAt = 0; refreshBilling(true); openPro("rota"); return; }
-    else { d.status = "error"; d.code = c || "unknown"; d.msg = c === "not_setup" ? "Rota reading isn't switched on yet. Paste the rota as text, or add your shifts by hand." : c === "image_too_large" ? "That photo is too big. Try a screenshot instead." : c === "images_unavailable" ? "Photos can't be read right now. Paste the rota as text instead." : c === "sampling_disabled" ? "Rota reading isn't available on your account right now." : c === "session_expired" ? "Your sign-in expired. Close and reopen ClockMe." : c === "refused" ? "That image couldn't be read. Try a screenshot of just your shifts." : c === "not_granted" ? "ClockMe wasn't allowed to read the rota. Allow it when asked, or add shifts by hand." : c === "rate_limited" ? "Too many requests right now. Try again in a minute." : c === "too_many" ? "You've read a lot of rotas in a short time. Try again in a bit, or paste it as text." : c === "busy_today" ? "Rota reading is busy today. Paste the rota as text, or try again tomorrow." : c === "image_rejected" ? "That image couldn't be read. Try a JPG or PNG screenshot." : c === "invalid_json" ? "The rota couldn't be read clearly. Try again or paste it as text." : "Something went wrong reading the rota. Try again."; }
+    else { d.status = "error"; d.code = c || "unknown"; d.msg = c === "not_setup" ? "Rota reading isn't switched on yet. Paste the rota as text, or add your shifts by hand." : c === "image_too_large" ? "That photo is too big. Try a screenshot instead." : c === "images_unavailable" ? "Photos can't be read right now. Paste the rota as text instead." : c === "sampling_disabled" ? "Rota reading isn't available on your account right now." : c === "session_expired" ? "Your sign-in expired. Close and reopen ClockMe." : c === "refused" ? "That image couldn't be read. Try a screenshot of just your shifts." : c === "not_granted" ? "ClockMe wasn't allowed to read the rota. Allow it when asked, or add shifts by hand." : c === "rate_limited" ? "Too many requests right now. Try again in a minute." : c === "too_many" ? "You've read a lot of rotas in a short time. Try again in a bit, or paste it as text." : c === "check_failed" ? "ClockMe couldn't confirm the request came from you. Reload the page and try again." : c === "busy_today" ? "Rota reading is busy today. Paste the rota as text, or try again tomorrow." : c === "image_rejected" ? "That image couldn't be read. Try a JPG or PNG screenshot." : c === "invalid_json" ? "The rota couldn't be read clearly. Try again or paste it as text." : "Something went wrong reading the rota. Try again."; }
   }
   track("rota_read", {from: UI.importFile ? "photo" : "text", result: d.status, error: d.code || null, shifts: (d.results || []).length});
   if(UI.sheet && UI.sheet.kind === "import") render();
@@ -4300,8 +4342,21 @@ const counts = {};
 const TABS = [["home","house","Home"],["insights","chart-pie","Insights"],["shifts","calendar-days","Shifts"],["profile","user-round","Profile"]];
 const reduceMotion = () => window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 function viewKey(){ const top = UI.stack[UI.stack.length-1]; return S.settings.onboarded ? UI.tab + "|" + (top ? top.page + (top.id||"") : "") + "|" + (UI.tab==="insights" ? UI.period + UI.anchor : "") : "ob" + UI.ob + (UI.ob ? "" : UI.auth || "welcome"); }
+/* Accessibility: every form control gets a name from the label people can see next to it
+   (the row's text, the setting's title, or its placeholder), so screen readers announce it. */
+function a11yLabels(scope){
+  for(const el of scope.querySelectorAll("input:not([type=hidden]),select,textarea")){
+    if(el.getAttribute("aria-label") || el.getAttribute("aria-labelledby")) continue;
+    if(el.id && scope.querySelector(`label[for="${CSS.escape(el.id)}"]`)) continue;
+    const wrap = el.closest("label"); if(wrap && wrap.textContent.trim()) continue;
+    const host = el.closest(".f, .item, .row, .tin, .fsec");
+    const cue = host && host.querySelector(":scope > span:not(.unit):not(.sq):not(.toggle), :scope > .t, :scope > label.h, :scope > b");
+    const t = (cue && cue.textContent.trim()) || el.getAttribute("placeholder") || el.getAttribute("title") || "";
+    if(t) el.setAttribute("aria-label", t.replace(/\s+/g, " ").slice(0, 80));
+  }
+}
 function render(){
-  try { renderInner(); }
+  try { renderInner(); a11yLabels(document.body); }
   catch(err){
     console.error(err);
     UI.sheet = null; UI.dialog = null;
@@ -4396,7 +4451,7 @@ if(S.settings.onboarded && syncRoster()) save();
 render();
 setTimeout(connect, 0);
 startStats();
-(() => { const back = handleBillingReturn(); refreshBilling(back === "portal"); })();
+(() => { const back = handleBillingReturn(); refreshBilling(back === "portal", back === true); })();
 </script>
 <script>if("serviceWorker" in navigator && location.protocol === "https:") addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>
 </body>

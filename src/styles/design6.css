@@ -1,0 +1,32 @@
+/* ---------- v13f: Polo's loading screen ---------- */
+.polo-load{position:fixed;inset:0;z-index:96;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pl-bg{position:absolute;inset:0;overflow:hidden;background:radial-gradient(120% 80% at 50% 38%,#9ADDFF 0%,#4EB2F6 42%,#1C74D8 100%);animation:plIn .4s ease both}
+.pl-bg .bubbles{z-index:0}
+@keyframes plIn{from{opacity:0}}
+.pl-m{position:relative;z-index:1;width:min(76vw,330px);will-change:transform}
+.pl-m .mascot{width:100%;height:auto;filter:drop-shadow(0 30px 40px rgba(6,40,90,.35))}
+.pl-m .m-shadow{display:none}
+.pl-text{position:relative;z-index:1;text-align:center;display:flex;flex-direction:column;gap:8px;margin-top:-6px}
+.pl-text b{font-family:var(--display);font-size:28px;font-weight:800;letter-spacing:-.035em;line-height:1.05;text-shadow:0 4px 18px rgba(6,40,90,.3)}
+.pl-step{font-size:16px;font-weight:500;opacity:.92;min-height:22px}
+.pl-step.in{animation:stepIn .35s cubic-bezier(.34,1.4,.5,1) both}
+@keyframes stepIn{from{opacity:0;transform:translateY(10px)}}
+.pl-bar{position:relative;z-index:1;width:min(68vw,270px);height:10px;border-radius:99px;background:rgba(255,255,255,.28);overflow:hidden;box-shadow:inset 0 1px 2px rgba(6,40,90,.25)}
+.pl-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#fff,#DDF4FF);box-shadow:0 0 14px rgba(255,255,255,.9)}
+.pl-burst{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.pl-ring{position:fixed;left:50%;top:42%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:7px solid rgba(255,255,255,.95);opacity:0;z-index:2;pointer-events:none}
+.polo-load.charge .pl-m{animation:charge .56s cubic-bezier(.5,0,.75,0) both}
+@keyframes charge{0%{transform:none}25%{transform:scale(1.06,.93)}45%{transform:scale(.95,1.07) rotate(-3deg)}62%{transform:scale(1.12) rotate(4deg)}80%{transform:scale(1.16) rotate(-5deg)}100%{transform:scale(1.34);filter:brightness(1.35)}}
+.polo-load.boom{pointer-events:none}
+.polo-load.boom .pl-bg{animation:plOut .7s ease .08s both}
+@keyframes plOut{to{opacity:0}}
+.polo-load.boom .pl-m{animation:popAway .16s ease-out both}
+@keyframes popAway{to{transform:scale(1.7);opacity:0}}
+.polo-load.boom .pl-text,.polo-load.boom .pl-bar{opacity:0;transition:opacity .18s}
+.polo-load.boom .pl-ring{animation:ring .75s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ring{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(16);border-width:1px}}
+@media (prefers-color-scheme: dark){:root:not([data-theme]) .pl-bg{background:radial-gradient(120% 80% at 50% 38%,#3E9CF0 0%,#1A5FC0 45%,#081C3A 100%)}}
+:root[data-theme="dark"] .pl-bg{background:radial-gradient(120% 80% at 50% 38%,#3E9CF0 0%,#1A5FC0 45%,#081C3A 100%)}
+.tcard > .tface{margin-top:auto}
+.tcard > :last-child{margin-bottom:auto}
+.signup .tcard{gap:14px}

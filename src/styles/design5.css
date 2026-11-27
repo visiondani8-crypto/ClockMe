@@ -1,0 +1,15 @@
+/* ---------- v13e: audit fixes ---------- */
+.chips.wrap{flex-wrap:wrap;overflow:visible;row-gap:6px}
+.spikes.nodata line{stroke:var(--line);stroke-width:2;stroke-dasharray:3 5}
+.tl-h br{display:none}
+.tl-h span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast{display:flex;align-items:center;gap:4px;width:max-content;max-width:calc(100vw - 32px);white-space:normal;line-height:1.35;text-align:left;border-radius:18px;padding:11px 16px}
+.toast button{flex:none;white-space:nowrap}
+.tabbar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.app{padding-bottom:calc(132px + env(safe-area-inset-bottom,0px))}
+/* Lighter on the phone's graphics: blur only where it shows (tab bar and sheets), not on every card */
+.paycard,.tile2,.acts .act .ball,.iconbtn.glassbtn,.dpill,.fchip,.qround{-webkit-backdrop-filter:none;backdrop-filter:none}
+.tl-row{grid-template-columns:50px minmax(0,1fr)}
+.tl-card,.tl-f,.tl-who,.tl-who > span:last-child{min-width:0}
+.tl-who > span:last-child small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast button{color:#8FD0FF!important}

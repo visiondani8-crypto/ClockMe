@@ -4,12 +4,28 @@ Live: https://clockme-two.vercel.app
 
 Track your shifts and see exactly what you'll be paid, with Polo the mascot.
 
-- `index.html`: the whole app (one file: layout, styles and code)
-- `api/read-rota.js`: reads a rota photo or text on the server (needs `ANTHROPIC_API_KEY`)
+- `src/`: the app's source (template, `app.js`, `styles/`, `monitor.js`). Edit here, then run `npm run build`.
+- `index.html`, `vendor/`: the built site (committed; CI and Vercel check it matches `src/`)
+- `api/`: server functions: `read-rota.js` (AI rota reading), `billing.js` (Stripe), `stripe-webhook.js`
+- `lib/`: shared server code: rate limits, billing, Stripe signature check, Turnstile
+- `tests/`: unit tests (`node --test`) and end-to-end, accessibility and responsive tests (Playwright + axe)
+- `.github/`: CI, CodeQL, Dependabot and the nightly encrypted database backup
+- `supabase/proposed/`: database changes waiting for approval (not applied)
+- `docs/runbooks.md`: environments, rollback, backup and restore, leaked secrets, webhooks, cost spikes
 - `manifest.webmanifest`, `sw.js`, `icons/`: install to the home screen and open offline
-- `vercel.json`: security headers and caching
+- `vercel.json`: security headers, caching, build check, and blocking repo-only paths
 
-Hosted on Vercel. Every push to `main` deploys automatically.
+Hosted on Vercel. Work on `dev` (preview deployments). Merging to `main` deploys to production.
+
+## Working on it
+
+```sh
+npm ci
+npm run build        # src/ → index.html and vendor/
+npm run serve        # http://localhost:8787 with the api/ functions
+npm test             # unit + end-to-end (run `npx playwright install chromium` once first)
+npm run audit        # dependency vulnerabilities (high and above fail)
+```
 
 ## Environment variables (Vercel → Project → Settings → Environment Variables)
 
@@ -23,7 +39,7 @@ Hosted on Vercel. Every push to `main` deploys automatically.
 After setup, Home asks once whether to share anonymous usage stats, and Profile → Account & privacy has a switch for it.
 Nothing loads or is stored until the person says yes. Events record which features get used
 (shift_saved, clocked_in, rota_read, invoice_saved, tab_opened and similar). They never include names, emails, pay, rates, tax or notes.
-Autocapture, heatmaps and session replay are off. The project token is public by design and is set in the build (site.env).
+Autocapture, heatmaps and session replay are off. The project token is public by design and is set in `config/public.json`.
 
 ## Rate limits (Upstash Redis, optional)
 
@@ -43,3 +59,10 @@ Prices are found by lookup key (`clockme_pro_monthly`, `clockme_pro_yearly`), so
 Environment variables: `STRIPE_SECRET_KEY` (required), `CLOCKME_SIGNING_SECRET` (set), `STRIPE_PORTAL_CONFIGURATION`
 (optional), `PRO_TRIAL_DAYS` (default 7), `STRIPE_AUTOMATIC_TAX=on` once VAT registered.
 Until the key is set and the prices exist, nothing is locked.
+
+## Optional services, off until configured
+
+- **Sentry** (errors and performance): add `sentry.dsn` to `config/public.json`. See `docs/runbooks.md` §7.
+- **Cloudflare Turnstile** (bot check on rota reading): `turnstile.siteKey` in `config/public.json` and `TURNSTILE_SECRET_KEY` in Vercel.
+
+Every server setting is listed in `.env.example`.

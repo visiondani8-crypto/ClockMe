@@ -1,0 +1,17 @@
+/* v21: accessibility fixes from the axe-core audit (WCAG 2.2 AA).
+   Every theme is checked by tests/e2e/a11y.spec.mjs; numbers below are contrast ratios on that theme's own surfaces. */
+
+/* Text colours. --green and --red stay as they are for bars, dots and badges; these are only for words and numbers. */
+:root{--muted:#4E6280; --green-text:#137033; --red-text:#B42318}                 /* light blue: 5.3–6.2 : 1 */
+:root[data-theme="white"]{--muted:#5E5C66}                                         /* 5.6–6.6 : 1 */
+:root[data-theme="lightpink"]{--muted:#7A4F63}                                     /* 6.0–6.7 : 1 */
+:root[data-theme="pink"]{--muted:#6A3550; --red-text:#8F1B12}                      /* 5.9–9.4 : 1 */
+:root[data-theme="dark"],:root[data-theme="darkpink"]{--green-text:#5FD35F; --red-text:#FF7A7F}
+:root[data-theme="dark"]{--muted:#8CA0BC}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){--muted:#8CA0BC; --green-text:#5FD35F; --red-text:#FF7A7F}}
+
+.g,.line .g,.right span.g,.shift .right span.g{color:var(--green-text)}
+.line .r,.right span.r,.danger,.danger-t{color:var(--red-text)}
+
+/* WCAG 2.2 target size (2.5.8): text links like "View all" get a 24px+ tap area without changing how they look */
+.link{min-height:32px;padding:4px 2px;margin:-4px -2px}

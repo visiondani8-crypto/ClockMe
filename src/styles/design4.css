@@ -1,0 +1,33 @@
+/* ---------- v13d: every setup question has its own colours, fading from one to the next ---------- */
+@property --bg{syntax:"<color>";inherits:true;initial-value:#EAF5FF}
+@property --wash1{syntax:"<color>";inherits:true;initial-value:transparent}
+@property --wash2{syntax:"<color>";inherits:true;initial-value:transparent}
+@property --wash3{syntax:"<color>";inherits:true;initial-value:transparent}
+@property --qsa{syntax:"<color>";inherits:true;initial-value:#4DB2FF}
+@property --qsb{syntax:"<color>";inherits:true;initial-value:#1B74DD}
+@property --accent{syntax:"<color>";inherits:true;initial-value:#1E8FE8}
+:root{transition:--bg .9s ease,--wash1 .9s ease,--wash2 .9s ease,--wash3 .9s ease,--qsa .7s ease,--qsb .7s ease,--accent .7s ease}
+:root[data-qstep]{--bg:var(--qbg);--wash1:var(--q1);--wash2:var(--q2);--wash3:var(--q3);--accent:var(--qsb);
+  --sel:linear-gradient(160deg,var(--qsa),var(--qsb));--btn:linear-gradient(160deg,var(--qsa),var(--qsb));--btn-text:#fff;
+  --sel-glow:0 10px 22px -10px var(--qsb);--btn-glow:0 14px 26px -14px var(--qsb);--accent-soft:color-mix(in srgb,var(--qsa) 18%,white)}
+:root[data-qstep="work"]{--qbg:#EAF5FF;--q1:#B3DEFF;--q2:#BDF2EA;--q3:#D3DEFF;--qsa:#4DB2FF;--qsb:#1B74DD}
+:root[data-qstep="country"]{--qbg:#E6FAF4;--q1:#A6EEDA;--q2:#C9F6E8;--q3:#C9EEFF;--qsa:#3DD6C0;--qsb:#0C9A8A}
+:root[data-qstep="tax"]{--qbg:#F1EEFF;--q1:#D5CBFF;--q2:#E6DEFF;--q3:#CDE0FF;--qsa:#9585FF;--qsb:#5A45DD}
+:root[data-qstep="pay"]{--qbg:#FFF6E6;--q1:#FFDFA3;--q2:#FFD3BF;--q3:#FFF0BF;--qsa:#FFB547;--qsb:#E5760E}
+:root[data-qstep="job"]{--qbg:#FFF0F3;--q1:#FFC7D5;--q2:#FFD8C7;--q3:#F5D1FF;--qsa:#FF7EA0;--qsb:#DD3864}
+:root[data-qstep="week"]{--qbg:#E4F8FF;--q1:#A3E5FF;--q2:#B3F0F5;--q3:#CADFFF;--qsa:#3CC2F2;--qsb:#0A86C7}
+:root[data-qstep="business"]{--qbg:#ECF9EE;--q1:#C1EEC8;--q2:#DAF6C8;--q3:#C8F0E5;--qsa:#5BD27A;--qsb:#21913F}
+:root[data-qstep="goal"]{--qbg:#F8EEFF;--q1:#EAC7FF;--q2:#FFCFE9;--q3:#D6D2FF;--qsa:#C07CFF;--qsb:#8530D3}
+@media (prefers-color-scheme: dark){:root:not([data-theme])[data-qstep]{--bg:color-mix(in srgb,var(--qsb) 10%,#050A14);--wash1:color-mix(in srgb,var(--qsa) 36%,transparent);--wash2:color-mix(in srgb,var(--qsb) 26%,transparent);--wash3:color-mix(in srgb,var(--q3) 14%,transparent);--accent:var(--qsa);--accent-soft:color-mix(in srgb,var(--qsa) 20%,#0A1222)}}
+:root[data-theme="dark"][data-qstep],:root[data-theme="darkpink"][data-qstep]{--bg:color-mix(in srgb,var(--qsb) 10%,#050A14);--wash1:color-mix(in srgb,var(--qsa) 36%,transparent);--wash2:color-mix(in srgb,var(--qsb) 26%,transparent);--wash3:color-mix(in srgb,var(--q3) 14%,transparent);--accent:var(--qsa);--accent-soft:color-mix(in srgb,var(--qsa) 20%,#0A1222)}
+/* step colour on the progress, choices and a glow behind the mascot */
+.ob.q .dots i.on{background:linear-gradient(90deg,var(--qsa),var(--qsb))}
+.ob.q .qcount{color:var(--accent)}
+.ob.q .choice.on,.ob.q .region.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 12px 24px -16px var(--qsb)}
+.ob.q .choice.on .tile,.ob.q .region.on .tile{color:var(--accent)}
+.ob.q .fsec>label.h{color:var(--accent)}
+.mslot{position:relative}
+.mslot::before{content:"";position:absolute;left:50%;top:50%;width:190px;height:190px;translate:-50% -46%;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--qsa) 55%,transparent) 0%,transparent 66%);z-index:-1;animation:qglow 3.2s ease-in-out infinite}
+.mslot .mascot{position:relative}
+@keyframes qglow{0%,100%{scale:1;opacity:.85}50%{scale:1.12;opacity:1}}
+@media (prefers-reduced-motion: reduce){:root{transition:none}.mslot::before{animation:none}}
