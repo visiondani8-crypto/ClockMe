@@ -5,7 +5,7 @@
   "type": "module",
   "description": "ClockMe: shift and pay tracker with Polo the mascot",
   "engines": {
-    "node": ">=20"
+    "node": "26.x"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
