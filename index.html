@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>ClockMe</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-lr66yv99PHX1G/+vOXp6VRBFjfqY1w8sf6qStTvuLno=' 'sha256-0wKmbIWStuVGU+NdCyTWKDZF2vNOrly0b2DzUC/pQEk=' 'sha256-M9rQRRDS5ZVofzX7eW9pITpNDxVknTw73Jzo4uD3uK0=' https://eu-assets.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-lr66yv99PHX1G/+vOXp6VRBFjfqY1w8sf6qStTvuLno=' 'sha256-0wKmbIWStuVGU+NdCyTWKDZF2vNOrly0b2DzUC/pQEk=' 'sha256-syRyTJcVAzpABHLPXKOgq7YmqlerBr8InGwRc78SZw8=' https://eu-assets.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests">
 <meta name="description" content="Track your shifts and see exactly what you'll be paid. Sunday and night extras, tax, payday, invoices and your rota, with Polo.">
 <meta name="theme-color" content="#EAF5FF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#050E1C" media="(prefers-color-scheme: dark)">
@@ -1292,6 +1292,53 @@ h2{font-weight:700;letter-spacing:-.02em}
   box-shadow:0 6px 20px rgba(0,0,0,.18);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (prefers-reduced-motion:no-preference){.net-banner{animation:netIn .25s ease-out}}
 @keyframes netIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+/* v23: computer version. On screens 1024px and wider, the bottom tab bar becomes a left sidebar with labels,
+   the content gets two columns, and sheets open as centred windows. Phones are unchanged. */
+.side-brand,.side-foot,.tabbar .tl{display:none}
+kbd{font:600 11px/1 Inter,system-ui,sans-serif;padding:3px 6px;border-radius:6px;border:1px solid var(--line,rgba(0,0,0,.12));background:var(--card,#fff);color:var(--muted)}
+.install .inst-hero{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.install .inst-hero .sb-m{width:64px;flex:0 0 64px}
+.install .inst-hero b{display:block;font-size:17px;margin-bottom:4px}
+.inst-steps{margin:0 0 16px;padding-left:22px;display:grid;gap:10px;line-height:1.45}
+.keys .item{justify-content:space-between}
+
+@media (min-width:1024px){
+  :root{--side:236px}
+  .app{max-width:1120px;margin:0 0 0 calc(var(--side) + 24px + max(0px, (100vw - var(--side) - 24px - 1120px) / 2));padding:22px 40px 56px}
+  /* sidebar */
+  .tabbar{left:16px;top:16px;bottom:16px;transform:none;width:var(--side);flex-direction:column;justify-content:flex-start;align-items:stretch;gap:4px;padding:14px 12px;border-radius:26px}
+  .tabbar .tab-ind{display:none}
+  .side-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px;color:#fff;font-size:19px;letter-spacing:-.01em}
+  .side-brand .sb-m{width:34px;height:34px;display:block}
+  .side-brand .sb-m svg{width:100%;height:100%}
+  .tabbar button{flex:0 0 auto;width:100%;height:48px;border-radius:14px;display:flex;align-items:center;gap:12px;padding:0 14px;font-weight:600;font-size:15px}
+  .tabbar button .ti{width:22px;height:22px}
+  .tabbar .tl{display:block;flex:1;text-align:left}
+  .tabbar button:not(.on){color:rgba(255,255,255,.9)}
+  .tabbar button.on{background:var(--tab-ind,rgba(255,255,255,.15));box-shadow:0 6px 16px -6px rgba(27,116,221,.8)}
+  .tabbar button:hover:not(.on){background:rgba(255,255,255,.07)}
+  .tabbar button:active{transform:scale(.98)}
+  .side-foot{display:grid;gap:4px;margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+  .side-x{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 12px;border-radius:12px;color:rgba(255,255,255,.75);font-size:13px;font-weight:600;text-align:left}
+  .side-x span{flex:1}
+  .side-x kbd{background:transparent;border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.55)}
+  .side-x:hover{background:rgba(255,255,255,.07);color:#fff}
+  /* two columns of cards: Home, Insights, Profile */
+  .stack.home,.app>.stack:not(.shifts){display:block;column-count:2;column-gap:24px}
+  .stack.home>*,.app>.stack:not(.shifts)>*{break-inside:avoid;margin:0 0 20px;width:100%}
+  .stack.home>.hello,.app>.stack:not(.shifts)>.topbar,.app>.stack:not(.shifts)>.bigt,.app>.stack:not(.shifts)>.seg,.app>.stack:not(.shifts)>.navper,.app>.stack:not(.shifts)>.stats{column-span:all}
+  .stack.shifts{max-width:820px}
+  .app>.stack:not(.shifts)>.bigt+.panel{column-span:all;max-width:520px}
+  .app .topbar .logo{visibility:hidden}
+  /* sheets as centred windows */
+  .overlay{align-items:center;padding:24px}
+  .sheet{max-width:600px;height:auto;max-height:min(90vh,920px);border-radius:26px}
+  .sheet.prowall{max-width:520px}
+  /* messages sit over the content, not the sidebar */
+  .toast,.net-banner{left:calc(50% + (var(--side) + 24px) / 2)}
+  .toast{bottom:28px}.net-banner{bottom:28px}
+  button,[data-act]{cursor:pointer}
+}
 </style>
 </head>
 <body>
@@ -3063,14 +3110,63 @@ function helpSheet(){
       <p>Use Profile → Back up my data to keep a copy you can restore any time.</p></div></div>
   </div>`;
 }
+/* ---------- Computer version (Mac first) ----------
+   ClockMe installs from the browser: Safari's Add to Dock (macOS Sonoma 14 or later, Safari 17+), or Chrome / Edge's
+   install button. Installed, it opens in its own window and works offline like the phone version. */
+UI.installPrompt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); UI.installPrompt = e; if(S.settings.onboarded) render(); });
+addEventListener("appinstalled", () => { UI.installPrompt = null; track("app_installed", {platform: isMac() ? "mac" : "other"}); toast("ClockMe is installed. Open it from your Dock or Applications"); render(); });
+const isStandalone = () => { try{ return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }catch(e){ return false; } };
+// iPads also report "Macintosh"; they have touch screens, Macs don't.
+const isMac = () => /Macintosh|Mac OS X/.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1);
+function browserInfo(){
+  const ua = navigator.userAgent;
+  if(/Edg\//.test(ua)) return {name:"Edge", prompt:true};
+  if(/Firefox\//.test(ua)) return {name:"Firefox", prompt:false, unsupported:true};
+  if(/OPR\//.test(ua)) return {name:"Opera", prompt:true};
+  if(/Chrome\/|Chromium\//.test(ua)) return {name:"Chrome", prompt:true};
+  if(/Safari\//.test(ua)){ const v = +((ua.match(/Version\/(\d+)/) || [])[1] || 0); return {name:"Safari", prompt:false, version:v, dock: v >= 17}; }
+  return {name:"your browser", prompt:false};
+}
+const installable = () => HOSTED && !isStandalone() && matchMedia("(min-width: 1024px)").matches;
+function installSheet(){
+  const b = browserInfo(), mac = isMac(), where = mac ? "your Dock and Applications folder" : "your Start menu or desktop";
+  const steps = b.name === "Safari" && b.dock ? [`In the menu bar, choose <b>File</b> → <b>Add to Dock…</b>`, "Keep the name ClockMe and click <b>Add</b>", `Open ClockMe from ${where}. It has its own window and works offline`]
+    : b.name === "Safari" ? [`This needs Safari 17, which comes with <b>macOS Sonoma 14</b> or later`, "Update from the Apple menu → <b>System Settings</b> → <b>General</b> → <b>Software Update</b>", "Or open ClockMe in Chrome or Edge, and install it from there"]
+    : b.prompt ? [UI.installPrompt ? `Click <b>Install ClockMe</b> below` : `Click the install icon at the right end of ${b.name}'s address bar, or open ${b.name}'s menu and choose <b>Install</b>`, "Confirm with <b>Install</b>", `Open ClockMe from ${where}. It has its own window and works offline`]
+    : [`${b.name} can't install apps`, `Open ${location.host} in ${mac ? "Safari or Chrome" : "Chrome or Edge"}`, "Then come back to this page and follow the steps"];
+  return `<div class="sheet-b"><div class="install">
+    <div class="inst-hero"><span class="sb-m">${mascotSVG("idle")}</span><div><b>ClockMe on your ${mac ? "Mac" : "computer"}</b><p class="small muted">Its own window, ${mac ? "in your Dock" : "on your desktop"}, and it works without a connection. Your phone and computer keep separate shifts for now; move them with a backup file from Profile.</p></div></div>
+    <ol class="inst-steps">${steps.map(x => `<li>${x}</li>`).join("")}</ol>
+    ${UI.installPrompt ? `<button class="btn big" data-act="installNow">${ico("download")} Install ClockMe</button>` : ""}
+    ${mac ? `<p class="xs muted" id="mac-req">Works on any Mac with macOS Sonoma 14 or later (MacBook Air or Pro from 2018). Best on Apple silicon (M1 or newer).</p>` : ""}
+  </div></div>`;
+}
+/* Keyboard shortcuts: one key, no modifiers, never while typing in a field. "?" lists them. */
+const KEYS = [["c","Clock in or out", () => A.clock()], ["n","Add a shift", () => A.newShift()], ["1","Home", () => goTab("home")], ["2","Insights", () => goTab("insights")], ["3","Shifts", () => goTab("shifts")], ["4","Profile", () => goTab("profile")], ["?","Show these shortcuts", () => A.shortcuts()], ["Esc","Close a window", null]];
+function goTab(t){ UI.sheet = null; UI.stack = []; UI.tab = t; render(); }
+function keysSheet(){
+  return `<div class="sheet-b"><div class="fsec"><div class="fgroup keys">${KEYS.map(([k,l]) => `<div class="item"><span>${l}</span><kbd>${k === "?" ? "?" : k.toUpperCase()}</kbd></div>`).join("")}</div>
+    <p class="xs muted" style="margin-top:10px">Shortcuts don't fire while you're typing in a box.</p></div></div>`;
+}
+addEventListener("keydown", e => {
+  if(e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || !S.settings.onboarded || UI.locked) return;
+  const t = e.target, typing = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+  if(e.key === "Escape"){ if(UI.dialog){ UI.dialog = null; render(); e.preventDefault(); } else if(UI.sheet){ A.closeSheet ? A.closeSheet() : (UI.sheet = null, render()); e.preventDefault(); } return; }
+  if(typing || UI.dialog) return;
+  if(UI.sheet && e.key !== "?") return;
+  const hit = KEYS.find(([k]) => k === e.key.toLowerCase() || (k === "?" && e.key === "?"));
+  if(hit && hit[2]){ e.preventDefault(); hit[2](); }
+});
 function sheetHTML(isNew){
   const s = UI.sheet; if(!s) return "";
   if(s.kind === "pro") return `<div class="overlay ${isNew?"anim":""}" data-act="closeSheetBg"><div class="sheet prowall" role="dialog" aria-label="ClockMe Pro">${proSheet()}</div></div>`;
-  const titles = {shift: s.data.type==="holiday" ? (s.data.id?"Edit holiday":"Book holiday") : s.data.type==="sick" ? "Sick day" : s.data.id ? "Edit shift" : (s.data.fromClock ? "Clock out" : "New shift"), job: S.jobs.some(j => j.id === s.data.id) ? "Edit job" : "New job", goal: s.data.id ? "Edit goal" : "New goal", name:"Your details", roster:"Weekly roster", import:"Scan your rota", pro:"ClockMe Pro", invoice: s.data.id ? "Edit invoice" : "New invoice", business:"Business & bank", pay:"Pay schedule", help:"How ClockMe works", pin:"Passcode lock", payslip:"Check a payslip", week:"Edit a week"};
-  const body = {shift:shiftSheet, job:jobSheet, goal:goalSheet, name:nameSheet, roster:rosterSheet, import:importSheet, invoice:invoiceSheet, business:businessSheet, pay:paySheet, help:helpSheet, pin:pinSheet, payslip:payslipSheet, week:weekSheet, pro:proSheet}[s.kind]();
-  const saveLabel = s.kind === "payslip" ? "Save" : s.kind === "invoice" ? (s.data.id ? "Save" : "Create") : (s.kind === "import" || s.kind === "help" || s.kind === "pin" || s.kind === "week" || s.kind === "pro") ? "" : "Save";
+  const titles0 = {install: `Install on your ${isMac() ? "Mac" : "computer"}`, keys: "Keyboard shortcuts"};
+  const titles = {...titles0, shift: s.data.type==="holiday" ? (s.data.id?"Edit holiday":"Book holiday") : s.data.type==="sick" ? "Sick day" : s.data.id ? "Edit shift" : (s.data.fromClock ? "Clock out" : "New shift"), job: S.jobs.some(j => j.id === s.data.id) ? "Edit job" : "New job", goal: s.data.id ? "Edit goal" : "New goal", name:"Your details", roster:"Weekly roster", import:"Scan your rota", pro:"ClockMe Pro", invoice: s.data.id ? "Edit invoice" : "New invoice", business:"Business & bank", pay:"Pay schedule", help:"How ClockMe works", pin:"Passcode lock", payslip:"Check a payslip", week:"Edit a week"};
+  const body = {shift:shiftSheet, job:jobSheet, goal:goalSheet, name:nameSheet, roster:rosterSheet, import:importSheet, invoice:invoiceSheet, business:businessSheet, pay:paySheet, help:helpSheet, install:installSheet, keys:keysSheet, pin:pinSheet, payslip:payslipSheet, week:weekSheet, pro:proSheet}[s.kind]();
+  const saveLabel = s.kind === "payslip" ? "Save" : s.kind === "invoice" ? (s.data.id ? "Save" : "Create") : (s.kind === "import" || s.kind === "help" || s.kind === "install" || s.kind === "keys" || s.kind === "pin" || s.kind === "week" || s.kind === "pro") ? "" : "Save";
   return `<div class="overlay ${isNew?"anim":""}" data-act="closeSheetBg"><div class="sheet" role="dialog" aria-label="${titles[s.kind]}">
-    <div class="sheet-h"><button data-act="closeSheet" style="justify-self:start">${s.kind==="import"||s.kind==="help"||s.kind==="pro"?"Close":"Cancel"}</button><b>${titles[s.kind]}</b>${saveLabel?`<button class="save" data-act="saveSheet" id="savebtn" ${canSave()?"":"disabled"}>${saveLabel}</button>`:"<span></span>"}</div>${body}</div></div>`;
+    <div class="sheet-h"><button data-act="closeSheet" style="justify-self:start">${s.kind==="import"||s.kind==="help"||s.kind==="install"||s.kind==="keys"||s.kind==="pro"?"Close":"Cancel"}</button><b>${titles[s.kind]}</b>${saveLabel?`<button class="save" data-act="saveSheet" id="savebtn" ${canSave()?"":"disabled"}>${saveLabel}</button>`:"<span></span>"}</div>${body}</div></div>`;
 }
 function canSave(){
   const s = UI.sheet; if(!s) return false; const d = s.data;
@@ -3926,6 +4022,9 @@ const A = {
   addEntry(el){ const j = activeJobs()[0]; const day = +el.dataset.day; const same = UI.sheet.data.entries.find(e=>e.day===day); UI.sheet.data.entries.push({id:uid(), day, jobId: same ? same.jobId : j.id, start:"09:00", end:"17:00", breakMin:j.breakMin||0}); render(); },
   delEntry(el){ UI.sheet.data.entries.splice(+el.dataset.i, 1); render(); },
   importRead(){ readRoster(); },
+  installMac(){ track("install_opened", {browser: browserInfo().name}); UI.sheet = {kind:"install", data:{}}; render(); },
+  async installNow(){ const p = UI.installPrompt; if(!p) return; UI.installPrompt = null; p.prompt(); try{ const c = await p.userChoice; track("install_choice", {outcome: c && c.outcome}); }catch(e){} UI.sheet = null; render(); },
+  shortcuts(){ UI.sheet = {kind:"keys", data:{}}; render(); },
   importStop(){ if(UI.importCtl) UI.importCtl.abort(); },
   importReset(){ Object.assign(UI.sheet.data, {status:"idle", results:[], warning:""}); render(); },
   importAdd(){
@@ -4389,7 +4488,7 @@ function renderInner(){
     const hideTabs = top && (top.page === "goal" || top.page === "invoice");
     const idx = Math.max(0, TABS.findIndex(t => t[0] === UI.tab));
     root.innerHTML = `<main class="app ${entering?"enter":""}">${mainView(C)}</main>
-      ${hideTabs?"":`<nav class="tabbar" aria-label="Tabs"><span class="tab-ind" style="transform:translateX(calc(${lastTabIdx} * (100% + 6px)))"></span>${TABS.map(([t,i,l])=>`<button class="${UI.tab===t?"on":""}" data-act="tab" data-tab="${t}" aria-label="${l}" ${UI.tab===t?'aria-current="page"':""}><span class="ti ${UI.tab===t && lastTabIdx!==idx?"pop":""}">${tabIco(i)}</span></button>`).join("")}</nav>`}
+      ${hideTabs?"":`<nav class="tabbar" aria-label="Tabs"><div class="side-brand" aria-hidden="true"><span class="sb-m">${mascotSVG("idle")}</span><b>ClockMe</b></div><span class="tab-ind" style="transform:translateX(calc(${lastTabIdx} * (100% + 6px)))"></span>${TABS.map(([t,i,l])=>`<button class="${UI.tab===t?"on":""}" data-act="tab" data-tab="${t}" aria-label="${l}" aria-keyshortcuts="${TABS.findIndex(x=>x[0]===t)+1}" ${UI.tab===t?'aria-current="page"':""}><span class="ti ${UI.tab===t && lastTabIdx!==idx?"pop":""}">${tabIco(i)}</span><span class="tl">${l}</span></button>`).join("")}<div class="side-foot">${installable() ? `<button class="side-x" data-act="installMac">${ico("download","ico-sm")}<span>${isMac() ? "Install on Mac" : "Install app"}</span></button>` : ""}<button class="side-x" data-act="shortcuts">${ico("info","ico-sm")}<span>Shortcuts</span><kbd aria-hidden="true">?</kbd></button></div></nav>`}
       ${sheetHTML(sheetNew)}${dialogHTML(dlgNew)}`;
     const ind = root.querySelector(".tab-ind");
     if(ind && lastTabIdx !== idx) requestAnimationFrame(() => requestAnimationFrame(() => { ind.style.transform = `translateX(calc(${idx} * (100% + 6px)))`; }));

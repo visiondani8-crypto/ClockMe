@@ -1,0 +1,47 @@
+/* v23: computer version. On screens 1024px and wider, the bottom tab bar becomes a left sidebar with labels,
+   the content gets two columns, and sheets open as centred windows. Phones are unchanged. */
+.side-brand,.side-foot,.tabbar .tl{display:none}
+kbd{font:600 11px/1 Inter,system-ui,sans-serif;padding:3px 6px;border-radius:6px;border:1px solid var(--line,rgba(0,0,0,.12));background:var(--card,#fff);color:var(--muted)}
+.install .inst-hero{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.install .inst-hero .sb-m{width:64px;flex:0 0 64px}
+.install .inst-hero b{display:block;font-size:17px;margin-bottom:4px}
+.inst-steps{margin:0 0 16px;padding-left:22px;display:grid;gap:10px;line-height:1.45}
+.keys .item{justify-content:space-between}
+
+@media (min-width:1024px){
+  :root{--side:236px}
+  .app{max-width:1120px;margin:0 0 0 calc(var(--side) + 24px + max(0px, (100vw - var(--side) - 24px - 1120px) / 2));padding:22px 40px 56px}
+  /* sidebar */
+  .tabbar{left:16px;top:16px;bottom:16px;transform:none;width:var(--side);flex-direction:column;justify-content:flex-start;align-items:stretch;gap:4px;padding:14px 12px;border-radius:26px}
+  .tabbar .tab-ind{display:none}
+  .side-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px;color:#fff;font-size:19px;letter-spacing:-.01em}
+  .side-brand .sb-m{width:34px;height:34px;display:block}
+  .side-brand .sb-m svg{width:100%;height:100%}
+  .tabbar button{flex:0 0 auto;width:100%;height:48px;border-radius:14px;display:flex;align-items:center;gap:12px;padding:0 14px;font-weight:600;font-size:15px}
+  .tabbar button .ti{width:22px;height:22px}
+  .tabbar .tl{display:block;flex:1;text-align:left}
+  .tabbar button:not(.on){color:rgba(255,255,255,.9)}
+  .tabbar button.on{background:var(--tab-ind,rgba(255,255,255,.15));box-shadow:0 6px 16px -6px rgba(27,116,221,.8)}
+  .tabbar button:hover:not(.on){background:rgba(255,255,255,.07)}
+  .tabbar button:active{transform:scale(.98)}
+  .side-foot{display:grid;gap:4px;margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+  .side-x{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 12px;border-radius:12px;color:rgba(255,255,255,.75);font-size:13px;font-weight:600;text-align:left}
+  .side-x span{flex:1}
+  .side-x kbd{background:transparent;border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.55)}
+  .side-x:hover{background:rgba(255,255,255,.07);color:#fff}
+  /* two columns of cards: Home, Insights, Profile */
+  .stack.home,.app>.stack:not(.shifts){display:block;column-count:2;column-gap:24px}
+  .stack.home>*,.app>.stack:not(.shifts)>*{break-inside:avoid;margin:0 0 20px;width:100%}
+  .stack.home>.hello,.app>.stack:not(.shifts)>.topbar,.app>.stack:not(.shifts)>.bigt,.app>.stack:not(.shifts)>.seg,.app>.stack:not(.shifts)>.navper,.app>.stack:not(.shifts)>.stats{column-span:all}
+  .stack.shifts{max-width:820px}
+  .app>.stack:not(.shifts)>.bigt+.panel{column-span:all;max-width:520px}
+  .app .topbar .logo{visibility:hidden}
+  /* sheets as centred windows */
+  .overlay{align-items:center;padding:24px}
+  .sheet{max-width:600px;height:auto;max-height:min(90vh,920px);border-radius:26px}
+  .sheet.prowall{max-width:520px}
+  /* messages sit over the content, not the sidebar */
+  .toast,.net-banner{left:calc(50% + (var(--side) + 24px) / 2)}
+  .toast{bottom:28px}.net-banner{bottom:28px}
+  button,[data-act]{cursor:pointer}
+}

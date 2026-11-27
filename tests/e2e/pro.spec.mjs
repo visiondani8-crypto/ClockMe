@@ -19,6 +19,8 @@ test("paywall, Stripe checkout, return and unlock (Stripe faked)", async ({ page
     const body = b.action === "checkout" ? { id: "cs_test_abcdefghijkl", url: "/?checkout=done&session_id=cs_test_abcdefghijkl" } : b.action === "portal" ? { url: "/?portal=back" } : { pass: "PASS.SIG", sub: SUB };
     return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
   });
+  // Toasts only show for 2 seconds, so record each one as it appears rather than racing the timer.
+  await page.addInitScript(() => { window.__toasts = []; new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.classList && n.classList.contains("toast")) window.__toasts.push(n.textContent); }).observe(document, { childList: true, subtree: true }); });
   await openApp(page, { seed: true });
   await page.reload();
   await expect.poll(() => page.evaluate(() => billingOn())).toBe(true);
@@ -31,7 +33,7 @@ test("paywall, Stripe checkout, return and unlock (Stripe faked)", async ({ page
   await Promise.all([page.waitForURL(/checkout=done/), page.click("#probuy")]);
   await page.waitForLoadState("load");
   await expect.poll(async () => { try { return await page.evaluate(() => isPro() && !!proSub()); } catch { return false; } }, { timeout: 10_000 }).toBe(true);
-  await expect(page.locator(".toast")).toContainText(/Welcome to Pro/);
+  await expect.poll(() => page.evaluate(() => window.__toasts.join(" | "))).toMatch(/Welcome to Pro/);
   expect(posts.find((p) => p.action === "checkout").plan).toBe("yearly");
   expect(posts.filter((p) => p.action === "claim").length, "the checkout is claimed exactly once").toBe(1);
   expect(await page.evaluate(() => location.search)).toBe("");

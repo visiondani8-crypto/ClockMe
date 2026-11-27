@@ -18,5 +18,10 @@ export default defineConfig({
   projects: [
     { name: "mobile", use: { ...devices["Pixel 7"], ...local } },
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 }, ...local } },
+    // Safari's engine (WebKit): Mac Safari and iPhone. Run in CI (PW_WEBKIT=1), where WebKit can be installed.
+    ...(process.env.PW_WEBKIT ? [
+      { name: "mac-safari", use: { ...devices["Desktop Safari"], viewport: { width: 1440, height: 900 }, launchOptions: {} } },
+      { name: "iphone-safari", use: { ...devices["iPhone 15"], launchOptions: {} } },
+    ] : []),
   ],
 });
