@@ -30,6 +30,22 @@ const turnstileOn = !!(publicCfg.turnstile && publicCfg.turnstile.siteKey);
 let html = template.replace("/*__STYLES__*/\n", () => styles).replace("/*__APP__*/\n", () => app);
 if (html.includes("/*__STYLES__*/") || html.includes("/*__APP__*/")) throw new Error("template placeholders not replaced");
 
+// Fonts, self-hosted from @fontsource-variable (OFL-1.1): Latin and Latin Extended, variable weight.
+const FONTS = [
+  ["Rubik", "rubik", "rubik-latin-wght-normal.woff2", "300 900", "latin"],
+  ["Rubik", "rubik", "rubik-latin-ext-wght-normal.woff2", "300 900", "latin-ext"],
+  ["Bricolage Grotesque", "bricolage-grotesque", "bricolage-grotesque-latin-opsz-normal.woff2", "200 800", "latin"],
+  ["Bricolage Grotesque", "bricolage-grotesque", "bricolage-grotesque-latin-ext-opsz-normal.woff2", "200 800", "latin-ext"],
+];
+const RANGES = {
+  latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD",
+  "latin-ext": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF",
+};
+const fontFiles = FONTS.map(([, pkg, file]) => [p(`node_modules/@fontsource-variable/${pkg}/files/${file}`), p(`vendor/fonts/${file}`)]);
+for (const [src] of fontFiles) if (!existsSync(src)) throw new Error(`run npm ci first (${src} missing)`);
+const fontCss = `<style>${FONTS.map(([fam, , file, w, r]) => `@font-face{font-family:"${fam}";font-style:normal;font-display:swap;font-weight:${w};src:url(/vendor/fonts/${file}) format("woff2");unicode-range:${RANGES[r]}}`).join("")}</style>
+<link rel="preload" href="/vendor/fonts/rubik-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>`;
+
 const cfgScript = `<script>window.CLOCKME_CFG=${JSON.stringify(publicCfg)};</script>`;
 const swScript = `<script>if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));</script>`;
 
@@ -42,8 +58,8 @@ const hashes = [...new Set(inline.map((s) => `'sha256-${createHash("sha256").upd
 const csp = [
   "default-src 'self'",
   `script-src 'self' ${hashes.join(" ")} https://eu-assets.i.posthog.com${turnstileOn ? " https://challenges.cloudflare.com" : ""}`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
   "img-src 'self' data: blob:",
   `connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com${sentryOrigin ? " " + sentryOrigin : ""}`,
   ...(turnstileOn ? ["frame-src https://challenges.cloudflare.com"] : []),
@@ -70,6 +86,7 @@ const head = `<meta http-equiv="Content-Security-Policy" content="${csp}">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" href="/icons/favicon-64.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+${fontCss}
 ${cfgScript}
 ${sentryDsn ? '<script src="/vendor/monitor.min.js" defer></script>\n' : ""}${turnstileOn ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>\n' : ""}`;
 if (!html.includes("<title>ClockMe</title>")) throw new Error("template has no <title>ClockMe</title>");
@@ -89,6 +106,7 @@ if (check) {
   if (!same(p("index.html"), html)) stale.push("index.html");
   if (!same(p("vendor/jspdf.umd.min.js"), vendorNow)) stale.push("vendor/jspdf.umd.min.js");
   if (!same(p("vendor/monitor.min.js"), monitor)) stale.push("vendor/monitor.min.js");
+  for (const [src, dst] of fontFiles) if (!same(dst, readFileSync(src))) stale.push(dst.split("/").slice(-3).join("/"));
   if (stale.length) { console.error(`Build is out of date: ${stale.join(", ")}. Run npm run build and commit.`); process.exit(1); }
   console.log("Build is up to date.");
 } else {
@@ -96,5 +114,7 @@ if (check) {
   mkdirSync(p("vendor"), { recursive: true });
   copyFileSync(vendorSrc, p("vendor/jspdf.umd.min.js"));
   writeFileSync(p("vendor/monitor.min.js"), monitor);
+  mkdirSync(p("vendor/fonts"), { recursive: true });
+  for (const [src, dst] of fontFiles) copyFileSync(src, dst);
   console.log(`Built index.html (${(html.length / 1024).toFixed(0)} KB, ${hashes.length} inline script hashes), vendor/jspdf.umd.min.js and vendor/monitor.min.js (${(monitor.length / 1024).toFixed(0)} KB, ${sentryDsn ? "on" : "off until a Sentry DSN is set"})`);
 }

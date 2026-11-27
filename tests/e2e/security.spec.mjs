@@ -40,3 +40,15 @@ test("usage stats: a yes loads PostHog from the EU host only", async ({ page }) 
   await expect.poll(() => hits.length).toBeGreaterThan(0);
   for (const h of hits) expect(h).toMatch(/^https:\/\/eu(-assets)?\.i\.posthog\.com\//);
 });
+
+test("fonts are self-hosted: Rubik and Bricolage Grotesque load from ClockMe, nothing is requested from Google", async ({ page, problems }) => {
+  const outside = [];
+  page.on("request", (r) => { if (!r.url().startsWith("http://localhost")) outside.push(r.url()); });
+  await openApp(page, { seed: true });
+  const loaded = await page.evaluate(async () => { await document.fonts.ready; await Promise.all([document.fonts.load('16px "Rubik"'), document.fonts.load('700 24px "Bricolage Grotesque"')]);
+    return [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family.replace(/"/g, "")); });
+  expect(loaded).toContain("Rubik");
+  expect(loaded).toContain("Bricolage Grotesque");
+  expect(outside.filter((u) => /fonts\.(googleapis|gstatic)\.com/.test(u))).toEqual([]);
+  expect(problems).toEqual([]);
+});

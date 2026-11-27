@@ -15,8 +15,8 @@ async function visitOnlineThenCut(page, context) {
   await page.reload();
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   await expect.poll(() => page.evaluate(async () => {
-    const c = await caches.open("clockme-v3");
-    return (await Promise.all(["/", "/vendor/jspdf.umd.min.js"].map((u) => c.match(u)))).every(Boolean);
+    const c = await caches.open("clockme-v4");
+    return (await Promise.all(["/", "/vendor/jspdf.umd.min.js", "/vendor/fonts/rubik-latin-wght-normal.woff2"].map((u) => c.match(u)))).every(Boolean);
   })).toBe(true);
   await context.setOffline(true);
 }
@@ -30,6 +30,8 @@ test("opens with no connection and shows the saved shifts", async ({ page, conte
   await expect(page.locator(".home")).toBeVisible();
   await expect(page.locator("#net-banner")).toHaveText("Offline · your shifts still save on this phone");
   await expect(page.locator("#net-banner")).toHaveAttribute("role", "status");
+  // the fonts come from the saved copy too
+  expect(await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('16px "Rubik"') && [...document.fonts].some((f) => f.family.replace(/"/g, "") === "Rubik" && f.status === "loaded"); })).toBe(true);
   expect(await cspViolations(page)).toEqual([]);
   expect(problems).toEqual([]);
 });
