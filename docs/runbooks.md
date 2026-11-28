@@ -65,7 +65,7 @@ Test a restore into a scratch project once a quarter. A backup that has never be
 
 ## 6. Rota-reading costs spike
 
-- Lower `ROTA_DAILY_CAP` (for everyone) or `ROTA_PER_DAY` in Vercel and redeploy. Limits only work once Upstash is connected.
+- Lower `ROTA_DAILY_CAP` (for everyone) or `ROTA_PER_DAY` in Vercel and redeploy. Without Upstash the limits are counted per server instance in memory, so connect Upstash for limits that hold across instances.
 - To stop it completely, remove `ANTHROPIC_API_KEY`. The app tells people to paste the rota as text.
 - Turn on Turnstile (add `TURNSTILE_SECRET_KEY` and `turnstile.siteKey`) if the traffic looks automated.
 - Set a monthly spend limit in the Anthropic console as a backstop.

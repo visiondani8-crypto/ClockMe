@@ -2,7 +2,7 @@
 // The built index.html is committed so Vercel serves it without a build step.
 //   node scripts/build.mjs          write index.html and vendor/
 //   node scripts/build.mjs --check  fail if the committed build is out of date (used in CI)
-import { readFileSync, writeFileSync, copyFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync, existsSync, rmSync, cpSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -109,6 +109,7 @@ if (check) {
   for (const [src, dst] of fontFiles) if (!same(dst, readFileSync(src))) stale.push(dst.split("/").slice(-3).join("/"));
   if (stale.length) { console.error(`Build is out of date: ${stale.join(", ")}. Run npm run build and commit.`); process.exit(1); }
   console.log("Build is up to date.");
+  makeDist();
 } else {
   writeFileSync(p("index.html"), html);
   mkdirSync(p("vendor"), { recursive: true });
@@ -116,5 +117,18 @@ if (check) {
   writeFileSync(p("vendor/monitor.min.js"), monitor);
   mkdirSync(p("vendor/fonts"), { recursive: true });
   for (const [src, dst] of fontFiles) copyFileSync(src, dst);
+  makeDist();
   console.log(`Built index.html (${(html.length / 1024).toFixed(0)} KB, ${hashes.length} inline script hashes), vendor/jspdf.umd.min.js and vendor/monitor.min.js (${(monitor.length / 1024).toFixed(0)} KB, ${sentryDsn ? "on" : "off until a Sentry DSN is set"})`);
+}
+
+// The deployed site is dist/: only the files the app itself needs (an allowlist). Everything else in the repo
+// (docs, migrations, workflows, tests, server code, config) is never served. Vercel's outputDirectory is "dist",
+// and scripts/serve.mjs serves the same folder, so tests run against exactly what is deployed.
+function makeDist() {
+  const PUBLIC = ["index.html", "sw.js", "manifest.webmanifest", "icons", "vendor"];
+  rmSync(p("dist"), { recursive: true, force: true });
+  mkdirSync(p("dist"));
+  for (const f of PUBLIC) cpSync(p(f), p(`dist/${f}`), { recursive: true });
+  const count = (d) => readdirSync(d, { withFileTypes: true }).reduce((n, e) => n + (e.isDirectory() ? count(`${d}/${e.name}`) : 1), 0);
+  console.log(`dist/ ready: ${count(p("dist"))} public files`);
 }

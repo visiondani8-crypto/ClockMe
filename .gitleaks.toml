@@ -5,5 +5,5 @@ useDefault = true
 [[allowlists]]
 description = "PostHog project token: a public, write-only browser key (it can send events, not read data). Allowed only in the public config and the built page."
 condition = "AND"
-paths = ['''^config/public\.json$''', '''^index\.html$''']
+paths = ['''^config/public\.json$''', '''^(dist/)?index\.html$''']
 regexes = ['''^phc_[A-Za-z0-9]{40,50}$''']

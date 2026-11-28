@@ -11,10 +11,14 @@ import { check, who } from "../lib/ratelimit.js";
 const DEVICE = /^[a-zA-Z0-9-]{8,64}$/;
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-zA-Z]{2,}$/;
 
-function siteOrigin(req) {
-  const host = req.headers["x-forwarded-host"] || req.headers.host;
-  const proto = req.headers["x-forwarded-proto"] || (String(host).startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
+// Where Stripe sends people back to. Only the Host header is used: Vercel routes by it, so it is always one of
+// this project's own domains. X-Forwarded-Host and X-Forwarded-Proto are ignored, so a caller can't make a real
+// ClockMe checkout page send the payer on to another site. Always https, except for local testing.
+export function siteOrigin(req) {
+  const host = String(req.headers.host || "").toLowerCase();
+  if (!/^[a-z0-9.-]{1,253}(:\d{1,5})?$/.test(host)) return null;
+  const local = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
+  return `${local ? "http" : "https"}://${host}`;
 }
 
 export default async function handler(req, res) {
@@ -37,6 +41,7 @@ export default async function handler(req, res) {
       const plan = (c.plans || []).find((p) => p.id === b.plan);
       if (!plan || !DEVICE.test(String(b.device || ""))) return res.status(400).json({ code: "bad_request" });
       const site = siteOrigin(req);
+      if (!site) return res.status(400).json({ code: "bad_request" });
       const params = {
         mode: "subscription",
         line_items: [{ price: plan.price, quantity: 1 }],
@@ -72,7 +77,9 @@ export default async function handler(req, res) {
         const next = sub && sub.id !== pass.s ? signPass({ c: pass.c, s: sub.id, t: Date.now() }) : b.pass;
         return res.status(200).json({ pass: next, sub: summary(sub) });
       }
-      const params = { customer: pass.c, return_url: `${siteOrigin(req)}/?portal=back` };
+      const site = siteOrigin(req);
+      if (!site) return res.status(400).json({ code: "bad_request" });
+      const params = { customer: pass.c, return_url: `${site}/?portal=back` };
       if (process.env.STRIPE_PORTAL_CONFIGURATION) params.configuration = process.env.STRIPE_PORTAL_CONFIGURATION;
       const p = await stripe("POST", "billing_portal/sessions", params);
       return res.status(200).json({ url: p.url });

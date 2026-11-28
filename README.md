@@ -6,14 +6,16 @@ Track your shifts and see exactly what you'll be paid, with Polo the mascot.
 
 - `src/`: the app's source (template, `app.js`, `styles/`, `monitor.js`). Edit here, then run `npm run build`.
 - `index.html`, `vendor/`: the built site (committed; CI and Vercel check it matches `src/`)
+- `dist/`: what is actually published, made by the build from an allowlist (the page, service worker, manifest, icons, vendor files). Nothing else in the repo is ever served.
 - `api/`: server functions: `read-rota.js` (AI rota reading), `billing.js` (Stripe), `stripe-webhook.js`
-- `lib/`: shared server code: rate limits, billing, Stripe signature check, Turnstile
+- `lib/`: shared server code: rate limits, billing, the rota-reading instructions (`rota.js`), Stripe signature check, Turnstile
 - `tests/`: unit tests (`node --test`) and end-to-end, accessibility and responsive tests (Playwright + axe)
 - `.github/`: CI, CodeQL, Dependabot and the nightly encrypted database backup
-- `supabase/proposed/`: database changes waiting for approval (not applied)
+- `supabase/migrations/`: the database changes that have been applied, in order (schema, row level security)
 - `docs/runbooks.md`: environments, rollback, backup and restore, leaked secrets, webhooks, cost spikes
 - `manifest.webmanifest`, `sw.js`, `icons/`: install to the home screen and open offline
-- `vercel.json`: security headers, caching, build check, and blocking repo-only paths
+- `vercel.json`: security headers, caching, the build check, and `outputDirectory: dist`
+- `docs/security-audit.md`: the security audit: every finding, its fix and how it was tested
 
 Hosted on Vercel. Work on `dev` (preview deployments). Merging to `main` deploys to production.
 
@@ -47,7 +49,9 @@ Autocapture, heatmaps and session replay are off. The project token is public by
 1,000 a day for everyone together. People are counted by a hashed IP, never the raw address.
 Connect Upstash for Redis from the Vercel Marketplace (it adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`),
 or set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` yourself. Change the caps with
-`ROTA_PER_HOUR`, `ROTA_PER_DAY` and `ROTA_DAILY_CAP`. Without Upstash the limits are simply off.
+`ROTA_PER_HOUR`, `ROTA_PER_DAY` and `ROTA_DAILY_CAP`. Without Upstash (or while it's down) the same limits are kept
+in each server instance's memory instead: weaker, because each instance counts separately and restarts reset it,
+but never off.
 
 ## ClockMe Pro (Stripe)
 

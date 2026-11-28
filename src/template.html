@@ -345,6 +345,7 @@ textarea{font:inherit;color:var(--text);background:transparent;border:0;width:10
 .keypad{display:grid;grid-template-columns:repeat(3,72px);gap:14px 22px;margin:8px 0}
 .keypad button{width:72px;height:72px;border-radius:50%;background:var(--panel);font-size:26px;font-weight:600;display:grid;place-items:center;transition:transform .12s,background .12s}
 .keypad button:active{transform:scale(.92);background:var(--track)}
+.keypad button:disabled{opacity:.4;transform:none}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .cwd{text-align:center;font-size:11px;font-weight:600;color:var(--muted);padding:4px 0}
 .cday{aspect-ratio:1/1.15;border-radius:12px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:6px 2px 4px;gap:3px;min-width:0;border:1px solid transparent}

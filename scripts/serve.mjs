@@ -8,8 +8,10 @@ import { join, extname, normalize, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+// Static files come from dist/, the same allowlisted folder Vercel serves (made by scripts/build.mjs).
+const site = join(root, "dist");
 const port = Number(process.env.PORT || 8787);
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "application/javascript", ".json": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml", ".css": "text/css" };
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "application/javascript", ".json": "application/json", ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml", ".css": "text/css", ".woff2": "font/woff2" };
 
 async function readBody(req) { const chunks = []; for await (const c of req) chunks.push(c); return Buffer.concat(chunks); }
 
@@ -45,8 +47,8 @@ createServer(async (req, res) => {
     if (api) return await runApi(api[1], req, res);
     let path = normalize(decodeURIComponent(url.pathname)).replace(/^(\.\.[/\\])+/, "");
     if (path.endsWith("/")) path += "index.html";
-    const file = join(root, path);
-    if (!file.startsWith(root) || /[/\\](node_modules|\.git|tests|scripts|src|config)[/\\]/.test(file.slice(root.length))) { res.writeHead(404).end(); return; }
+    const file = join(site, path);
+    if (!file.startsWith(site + "/") && file !== site) { res.writeHead(404).end(); return; }
     const s = await stat(file).catch(() => null);
     if (!s || !s.isFile()) { res.writeHead(404).end(); return; }
     res.writeHead(200, { "content-type": TYPES[extname(file)] || "application/octet-stream" });
@@ -55,4 +57,7 @@ createServer(async (req, res) => {
     res.writeHead(500).end();
     console.error(e);
   }
-}).listen(port, () => console.log(`ClockMe on http://localhost:${port}`));
+}).listen(port, async () => {
+  if (!(await stat(join(site, "index.html")).catch(() => null))) console.error("dist/ is missing: run npm run build first");
+  console.log(`ClockMe on http://localhost:${port}`);
+});

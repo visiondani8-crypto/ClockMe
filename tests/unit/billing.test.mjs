@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { call } from "./helpers/fakes.mjs";
+import { call, ROTA } from "./helpers/fakes.mjs";
 
 let subStatus = "trialing"; const calls = [];
 const SUB = () => ({ id: "sub_1", status: subStatus, created: 1, trial_end: 1800000000, cancel_at_period_end: false, cancel_at: null, items: { data: [{ current_period_end: 1800000000, price: { recurring: { interval: "year" } } }] } });
@@ -66,8 +66,8 @@ test("bad plans and other sites are refused", async () => {
 test("rota reading needs Pro once billing is on", async () => {
   process.env.ANTHROPIC_API_KEY = "k";
   const { default: rota } = await import("../../api/read-rota.js");
-  assert.equal((await call(rota, "POST", { prompt: "x" })).body.code, "pro_required");
-  assert.equal((await call(rota, "POST", { prompt: "x" }, { "x-clockme-pass": pass })).code, 200);
+  assert.equal((await call(rota, "POST", ROTA)).body.code, "pro_required");
+  assert.equal((await call(rota, "POST", ROTA, { "x-clockme-pass": pass })).code, 200);
   subStatus = "canceled";
-  assert.equal((await call(rota, "POST", { prompt: "x" }, { "x-clockme-pass": pass })).body.code, "pro_required");
+  assert.equal((await call(rota, "POST", ROTA, { "x-clockme-pass": pass })).body.code, "pro_required");
 });

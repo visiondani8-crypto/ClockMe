@@ -7,6 +7,8 @@ import { check, who } from "../lib/ratelimit.js";
 import { proGate } from "../lib/billing.js";
 // Cloudflare Turnstile (optional): only real visitors of the ClockMe page can use it. See lib/turnstile.js.
 import { verifyTurnstile, clientIp } from "../lib/turnstile.js";
+// The instructions for Claude are built here from checked fields; only shift data is returned (lib/rota.js).
+import { parseRotaRequest, rotaPrompt, cleanRotaResult } from "../lib/rota.js";
 
 export const config = { maxDuration: 60 };
 
@@ -17,6 +19,7 @@ const ALL_DAY = () => n(process.env.ROTA_DAILY_CAP, 1000); // everyone together,
 
 const MODEL = process.env.CLOCKME_MODEL || "claude-sonnet-5-5";
 const TYPES = /^image\/(jpeg|png|webp|gif)$/;
+const B64 = /^[A-Za-z0-9+/]+={0,2}$/;
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -29,9 +32,12 @@ export default async function handler(req, res) {
   try { if (origin && new URL(origin).host !== req.headers.host) return res.status(403).json({ code: "forbidden" }); }
   catch { return res.status(403).json({ code: "forbidden" }); }
 
-  const { prompt, image, mediaType } = req.body || {};
-  if (typeof prompt !== "string" || !prompt.trim() || prompt.length > 20000) return res.status(400).json({ code: "bad_request" });
+  const { image, mediaType } = req.body || {};
+  const rota = parseRotaRequest(req.body);
+  if (!rota) return res.status(400).json({ code: "bad_request" });
   if (image != null && (typeof image !== "string" || image.length > 6_000_000)) return res.status(413).json({ code: "image_too_large" });
+  if (image != null && !B64.test(image)) return res.status(400).json({ code: "bad_request" });
+  if (!rota.text.trim() && !image) return res.status(400).json({ code: "bad_request" });
 
   const id = who(req), day = new Date().toISOString().slice(0, 10);
   const lim = await check([
@@ -52,7 +58,7 @@ export default async function handler(req, res) {
 
   const content = [];
   if (image) content.push({ type: "image", source: { type: "base64", media_type: TYPES.test(mediaType) ? mediaType : "image/jpeg", data: image } });
-  content.push({ type: "text", text: `${prompt}\n\nReply with only the JSON object, no other text.` });
+  content.push({ type: "text", text: rotaPrompt(rota) });
 
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -66,7 +72,7 @@ export default async function handler(req, res) {
     const text = (out.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (!m) return res.status(422).json({ code: "invalid_json" });
-    try { return res.status(200).json(JSON.parse(m[0])); }
+    try { return res.status(200).json(cleanRotaResult(JSON.parse(m[0]))); }
     catch { return res.status(422).json({ code: "invalid_json" }); }
   } catch {
     return res.status(502).json({ code: "upstream_error" });
