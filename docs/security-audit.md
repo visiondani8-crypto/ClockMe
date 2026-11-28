@@ -298,8 +298,10 @@ injected. Turning `cleanData()` off makes that test fail.
 
 ## 4. Configuration and headers
 
-**CORS.** The API sends no `Access-Control-Allow-Origin`, so other websites' pages can't read its answers.
-Static files are public anyway. A new test fails if CORS is ever added to `vercel.json`.
+**CORS.** The API sends no `Access-Control-Allow-Origin`, so other websites' pages can't read its answers. A new
+test fails if CORS is ever added to `vercel.json`. Vercel adds `Access-Control-Allow-Origin: *` to static files by
+default. Those are only the public app files (the page, icons, fonts), so that exposes nothing, and
+`Cross-Origin-Resource-Policy: same-origin` stops other sites embedding them.
 
 ### H1: security headers (Low)
 
@@ -362,7 +364,14 @@ Every tracked file has a job (the README lists them).
   186 of 186 passed.
 - Secret scan of history and files: no leaks. Workflow lint (actionlint): clean.
 - Build check: the committed build matches the source.
-- Safari engine (WebKit) tests run in GitHub CI.
+- GitHub CI on commit `9df3fb6`: build check, unit tests and 372 browser tests passed. That's the same suite plus
+  Safari's engine (WebKit) at Mac and iPhone sizes. Also passed there: `npm audit` (0 vulnerabilities), gitleaks
+  (no leaks) and CodeQL.
+- Preview deployment, checked live:
+  - `/lib/billing.js`, `/docs/runbooks.md`, `/supabase/migrations/…sql` and `/vercel.json` all answer 404
+  - every new header is present
+  - `/api/billing` and `/api/read-rota` answer normally
+  - the build log shows `dist/ ready: 14 public files`
 
 ## What still needs Daniel
 
